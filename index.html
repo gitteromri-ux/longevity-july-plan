@@ -20,585 +20,161 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .db-subtitle{font-size:14px;color:var(--text-secondary);line-height:1.6;margin:6px 0 26px;max-width:900px;}
+  body{background:var(--bg-deep);}
+  .page{max-width:1180px;margin:0 auto;padding:48px 32px 64px;}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#818CF8;margin-bottom:12px;}
+  .page-title{font-size:34px;font-weight:700;letter-spacing:-.03em;color:var(--text-primary);line-height:1.15;margin-bottom:14px;}
+  .page-sub{font-size:15px;line-height:1.65;color:var(--text-secondary);max-width:820px;margin-bottom:34px;}
+  .page-sub b{color:var(--text-primary);font-weight:600;}
+  .section-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin:44px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle);}
   .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:6px;font-weight:500;}
-  .verdict-banner.tone-amber{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.18);border-left-color:#F59E0B;}
-  .verdict-banner.tone-amber .verdict-label{color:#F59E0B;}
-  .verdict-banner.tone-red{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.18);border-left-color:#EF4444;}
-  .verdict-banner.tone-red .verdict-label{color:#EF4444;}
-  .verdict-banner.tone-indigo{background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.18);border-left-color:#6366F1;}
-  .verdict-banner.tone-indigo .verdict-label{color:#818CF8;}
-  .verdict-text b{color:var(--text-primary);font-weight:600;}
-  .nav-icon{display:inline-block;width:18px;text-align:center;margin-right:2px;opacity:.85;}
-  .sidebar-footer{margin-top:auto;padding:16px 20px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);}
-  .data-table td.pos{color:#10B981;font-weight:600;} .data-table td.neg{color:#EF4444;font-weight:600;}
-  .data-table td.hot{color:#F59E0B;font-weight:600;} .data-table td.dim{color:var(--text-muted);}
-  .data-table td.tgt{background:rgba(99,102,241,.12);color:#A5B4FC;font-weight:700;}
+  .chart-grid{display:grid;gap:16px;margin-bottom:8px;}
+  .chart-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  .chart-wrap{position:relative;}
+  .takeaways{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:8px;}
+  .take{background:var(--bg-card);border:1px solid var(--border-subtle);border-left:4px solid #6366F1;border-radius:var(--radius-md);padding:20px 22px;}
+  .take.green{border-left-color:#10B981;} .take.amber{border-left-color:#F59E0B;} .take.red{border-left-color:#EF4444;}
+  .take-num{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#818CF8;margin-bottom:8px;}
+  .take.green .take-num{color:#10B981;} .take.amber .take-num{color:#F59E0B;} .take.red .take-num{color:#EF4444;}
+  .take-head{font-size:16px;font-weight:700;color:var(--text-primary);letter-spacing:-.01em;margin-bottom:8px;line-height:1.3;}
+  .take-body{font-size:13.5px;line-height:1.6;color:var(--text-secondary);}
+  .take-body b{color:var(--text-primary);font-weight:600;}
+  .footer{margin-top:48px;font-size:11px;color:var(--text-muted);text-align:center;}
+  .bignote{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.18);border-radius:var(--radius-md);padding:22px 26px;margin-top:26px;}
+  .bignote .l{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#818CF8;margin-bottom:10px;}
+  .bignote .t{font-size:15px;line-height:1.7;color:var(--text-secondary);}
+  .bignote .t b{color:var(--text-primary);font-weight:600;}
+  @media(max-width:820px){.chart-grid.cols-2,.takeaways{grid-template-columns:1fr;}.page{padding:32px 18px 48px;}.page-title{font-size:26px;}}
 </style>
 </head>
 <body>
-
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <svg class="sidebar-logo" viewBox="0 0 32 32" fill="none" aria-label="CEO Suite logo">
-      <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M8 16h16M16 8v16" stroke="#6366F1" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="16" cy="16" r="4" fill="#6366F1" opacity="0.3"/>
-    </svg>
-    <span class="sidebar-title">Longevity — July Plan</span>
-  </div>
-  <nav class="sidebar-nav" id="sidebarNav">
-    <div class="nav-section-label">Board View</div>
-    <button class="nav-item active" data-view="overview"><span class="nav-icon">&#9635;</span> Executive Summary</button>
-    <div class="nav-section-label">The Model</div>
-    <button class="nav-item" data-view="economics"><span class="nav-icon">&#9703;</span> Unit Economics</button>
-    <button class="nav-item" data-view="conversion"><span class="nav-icon">&#9672;</span> Path to 6 Wins</button>
-    <button class="nav-item" data-view="cadence"><span class="nav-icon">&#9969;</span> Rep Capacity</button>
-    <div class="nav-section-label">Levers</div>
-    <button class="nav-item" data-view="funnel"><span class="nav-icon">&#9684;</span> Funnel &amp; Leakage</button>
-    <button class="nav-item" data-view="leadmix"><span class="nav-icon">&#9680;</span> Lead Mix</button>
-    <button class="nav-item" data-view="sensitivity"><span class="nav-icon">&#9638;</span> Sensitivity &amp; Risk</button>
-  </nav>
-  <div class="sidebar-footer">Created with Perplexity Computer</div>
-</aside>
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
-
-<main class="main-content"><div class="dashboard-container" id="dashboardContainer"></div></main>
-
+<main class="page" id="page"></main>
 <script>
 const A = {"cpl": 15.0, "price": 1200.0, "reps": 3, "targetAcq": 6, "contact": 0.25, "bioShare": 0.3, "spendWk": 5800.0, "weekdaySpend": 5000.0, "weekendSpend": 800.0, "leadsWk": 386.7, "bioLeads": 116, "paidLeads": 271, "contactedWk": 96.7, "convNeeded": 0.0621, "convNeededPct": 6.21, "breakevenAcq": 4.83, "convBreakeven": 5.0, "acq": 6, "rev": 7200.0, "roas": 1.24, "cac": 967, "profit": 1400, "revMo": 31200, "profitMo": 6067, "neverContacted": 290, "contactedNotAcq": 90.7, "trappedUncontacted": 21600, "dialsWk": 3000, "costPerDial": 1.93, "dialsPerAcq": 500, "acqPer1000": 2.0, "cap3": 450, "cap4": 600, "cap5": 750, "callsNeededWd": 600, "overloadPct": 33, "levers": [["Contact +5pts", 1.2, 1440], ["Budget +20%", 1.2, 1440], ["Conversion +1pt", 0.97, 1160], ["CPL -$2", 0.92, 1108]], "contRange": [15, 20, 25, 30, 35], "convRange": [3.0, 4.0, 5.0, 6.21, 7.0, 8.0], "grid": [[1.74, 2.32, 2.9, 3.6, 4.06, 4.64], [2.32, 3.09, 3.87, 4.8, 5.41, 6.19], [2.9, 3.87, 4.83, 6.0, 6.77, 7.73], [3.48, 4.64, 5.8, 7.2, 8.12, 9.28], [4.06, 5.41, 6.77, 8.4, 9.47, 10.83]], "gridRev": [[2088, 2784, 3480, 4322, 4872, 5568], [2784, 3712, 4640, 5763, 6496, 7424], [3480, 4640, 5800, 7204, 8120, 9280], [4176, 5568, 6960, 8644, 9744, 11136], [4872, 6496, 8120, 10085, 11368, 12992]], "convCurve": [3.0, 4.0, 5.0, 6.0, 6.21, 7.0, 8.0, 9.0, 10.0], "acqCurve": [2.9, 3.87, 4.83, 5.8, 6.0, 6.77, 7.73, 8.7, 9.67], "revCurve": [3480, 4640, 5800, 6960, 7204, 8120, 9280, 10440, 11600], "bioShareCurve": [30, 35, 40, 45, 50], "effCplCurve": [10.5, 9.75, 9.0, 8.25, 7.5], "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "daySpend": [1000, 1000, 1000, 1000, 1000, 400, 400], "dayLeads": [67, 67, 67, 67, 67, 27, 27], "dayCallsTeam": [600, 600, 600, 600, 600, 0, 0], "dayCallsRep": [200, 200, 200, 200, 200, 0, 0]};
 document.addEventListener("DOMContentLoaded", function () {
   Chart.register(ChartDataLabels);
-  const $ = (s) => document.querySelector(s);
-  const container = $("#dashboardContainer");
-  const charts = [];
-  const destroyCharts = () => { while (charts.length) { const c = charts.pop(); try { c.destroy(); } catch(e){} } };
+  const C = { indigo:"#6366F1", cyan:"#06B6D4", amber:"#F59E0B", emerald:"#10B981", red:"#EF4444",
+    text:"#F1F5F9", textSec:"#94A3B8", textMuted:"#64748B", grid:"rgba(148,163,184,0.10)" };
   const money = (v) => "$" + Math.round(v).toLocaleString();
-
-  const C = {
-    indigo:"#6366F1", cyan:"#06B6D4", amber:"#F59E0B", emerald:"#10B981", red:"#EF4444",
-    text:"#F1F5F9", textSec:"#94A3B8", textMuted:"#64748B", grid:"rgba(148,163,184,0.10)"
-  };
-
-  const baseTooltip = {
-    mode:"index", intersect:false,
-    backgroundColor:"rgba(15,23,42,0.96)", titleColor:C.text, bodyColor:C.textSec,
-    borderColor:"rgba(148,163,184,0.2)", borderWidth:1,
-    titleFont:{size:12,weight:"600",family:"Inter"}, bodyFont:{size:11,family:"Inter"},
-    padding:12, cornerRadius:8, boxPadding:4
-  };
-  const scaleX = (title) => ({
-    title: title ? {display:true,text:title,color:C.textMuted,font:{size:11,weight:"600",family:"Inter"}} : {display:false},
-    ticks:{color:C.textMuted,font:{size:10,family:"Inter"}}, grid:{display:false}
-  });
-  const scaleY = (title, cb, opts={}) => Object.assign({
-    beginAtZero:true,
-    title: title ? {display:true,text:title,color:C.textMuted,font:{size:11,family:"Inter"}} : {display:false},
-    ticks:{color:C.textMuted,font:{size:10,family:"Inter"},callback:cb||((v)=>v)},
-    grid:{color:C.grid}
-  }, opts);
-  const grad = (hex, a1=0.30, a2=0.0) => (ctx) => {
-    const {ctx:cx, chartArea} = ctx.chart; if (!chartArea) return "rgba(0,0,0,0)";
-    const g = cx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+  const baseTooltip = { mode:"index", intersect:false, backgroundColor:"rgba(15,23,42,0.96)",
+    titleColor:C.text, bodyColor:C.textSec, borderColor:"rgba(148,163,184,0.2)", borderWidth:1,
+    titleFont:{size:12,weight:"600",family:"Inter"}, bodyFont:{size:11,family:"Inter"}, padding:12, cornerRadius:8, boxPadding:4 };
+  const scaleX = (t) => ({ title:t?{display:true,text:t,color:C.textMuted,font:{size:11,weight:"600",family:"Inter"}}:{display:false},
+    ticks:{color:C.textMuted,font:{size:10,family:"Inter"}}, grid:{display:false} });
+  const scaleY = (t,cb,o={}) => Object.assign({ beginAtZero:true,
+    title:t?{display:true,text:t,color:C.textMuted,font:{size:11,family:"Inter"}}:{display:false},
+    ticks:{color:C.textMuted,font:{size:10,family:"Inter"},callback:cb||((v)=>v)}, grid:{color:C.grid} }, o);
+  const grad = (hex,a1=0.30,a2=0.0) => (ctx) => { const {ctx:cx,chartArea}=ctx.chart; if(!chartArea) return "rgba(0,0,0,0)";
+    const g=cx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
     const r=parseInt(hex.slice(1,3),16),gg=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-    g.addColorStop(0,`rgba(${r},${gg},${b},${a1})`); g.addColorStop(1,`rgba(${r},${gg},${b},${a2})`); return g;
-  };
-  const mk = (id, cfg) => {
-    const el = document.getElementById(id); if (!el) return;
-    cfg.options = cfg.options || {};
-    cfg.options.responsive = true; cfg.options.maintainAspectRatio = false;
-    cfg.options.animation = { duration: 900, easing:"easeOutQuart" };
-    charts.push(new Chart(el.getContext("2d"), cfg));
-  };
+    g.addColorStop(0,`rgba(${r},${gg},${b},${a1})`); g.addColorStop(1,`rgba(${r},${gg},${b},${a2})`); return g; };
+  const charts=[]; const mk=(id,cfg)=>{ const el=document.getElementById(id); if(!el) return;
+    cfg.options=cfg.options||{}; cfg.options.responsive=true; cfg.options.maintainAspectRatio=false;
+    cfg.options.animation={duration:900,easing:"easeOutQuart"}; charts.push(new Chart(el.getContext("2d"),cfg)); };
 
-  const headline = (t,s) => `<div class="db-title">${t}</div>${s?`<div class="db-subtitle">${s}</div>`:""}`;
-  const kpiRow = (items) => {
-    const cls = items.length<=3?"cols-3":items.length===4?"cols-4":items.length===5?"cols-5":"cols-6";
-    return `<div class="kpi-row ${cls}">${items.map(k=>`<div class="kpi-card${k.accent?' '+k.accent:''}">
-      <div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div>
-      ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:""}</div>`).join("")}</div>`;
-  };
-  const chartCard = (id, title, sub, h) => `<div class="chart-card">
-      <div class="chart-insight-title">${title}</div>
-      ${sub?`<div class="chart-insight-stat">${sub}</div>`:""}
-      <div class="chart-wrap" style="height:${h||360}px;position:relative"><canvas id="${id}"></canvas></div></div>`;
-  const grid2 = (a,b) => `<div class="chart-grid cols-2">${a}${b}</div>`;
-  const dataTable = (title, headers, rows) => `<div class="data-table-card">
-      <div class="chart-insight-title">${title}</div>
-      <div class="data-table-wrap"><table class="data-table">
-        <thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead>
-        <tbody>${rows.map(r=>`<tr>${r.map(c=>{
-          const cls = c&&typeof c==="object"?` class="${c.cls}"`:"";
-          const v = c&&typeof c==="object"?c.v:c; return `<td${cls}>${v}</td>`;}).join("")}</tr>`).join("")}</tbody>
-      </table></div></div>`;
-  const verdict = (tag, html, tone="") => `<div class="verdict-banner${tone?' tone-'+tone:''}">
-      <div class="verdict-label">${tag}</div><div class="verdict-text">${html}</div></div>`;
+  const kpiRow = (items) => `<div class="kpi-row cols-${items.length}">${items.map(k=>`<div class="kpi-card${k.accent?' '+k.accent:''}">
+      <div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div>${k.sub?`<div class="kpi-sub">${k.sub}</div>`:""}</div>`).join("")}</div>`;
+  const card = (id,title,sub,h) => `<div class="chart-card"><div class="chart-insight-title">${title}</div>
+      ${sub?`<div class="chart-insight-stat">${sub}</div>`:""}<div class="chart-wrap" style="height:${h||340}px"><canvas id="${id}"></canvas></div></div>`;
 
-  // =========================================================================
-  // VIEW 1 — EXECUTIVE SUMMARY
-  // =========================================================================
-  function renderOverview() {
-    const gapAcq = (A.targetAcq - A.breakevenAcq).toFixed(2);
-    let h = headline("July at a Glance — A Profitable Plan That Lives or Dies on Conversion",
-      `At $${A.spendWk.toLocaleString()}/week in spend the plan generates ${A.leadsWk} leads. To hit the board target of <b>${A.targetAcq} acquisitions/week ($${A.rev.toLocaleString()}/wk, $${A.revMo.toLocaleString()}/mo)</b>, the team must convert <b>${A.convNeededPct}%</b> of the ${A.contactedWk} leads it actually contacts. Break-even is ${A.breakevenAcq} wins — every week runs on a thin ${gapAcq}-win margin of safety.`);
-    h += kpiRow([
-      {label:"Weekly Spend", value:money(A.spendWk), sub:"$1,000×5 + $400 Sat + $400 Sun"},
-      {label:"Leads / Week", value:String(A.leadsWk), sub:`${A.paidLeads} paid · ${A.bioLeads} bio`},
-      {label:"Target Wins / Wk", value:String(A.targetAcq), accent:"accent-green", sub:`$${A.rev.toLocaleString()}/wk revenue`},
-      {label:"Required Conversion", value:A.convNeededPct+"%", accent:"accent-amber", sub:"acq / contacted lead"},
-      {label:"ROAS @ Target", value:A.roas+"×", accent:"accent-green", sub:`CAC $${A.cac} < $${A.price} price`},
-    ]);
-    h += grid2(
-      chartCard("ovWaterfall","The Week's P&L — $"+A.profit.toLocaleString()+" Profit at Target","Ad spend to revenue to weekly profit, at 6 wins",360),
-      chartCard("ovMargin","Margin of Safety — 6 Wins vs 4.83 Break-Even","Acquisitions needed before the week turns a profit",360)
-    );
-    h += chartCard("ovConvProfit","Monthly Profit Swings ~$6K on One Point of Conversion","Weekly conversion rate → monthly profit (4.3-week month)",340);
-    h += verdict("The Board Takeaway",
-      `The plan is <b>structurally profitable</b>: at ${A.targetAcq} wins it clears $${A.profit.toLocaleString()}/week ($${A.profitMo.toLocaleString()}/month) at a ${A.roas}× ROAS with CAC of $${A.cac} — under the $${A.price} price. But the result hinges on holding a <b>${A.convNeededPct}% close rate on contacted leads</b>. Break-even is ${A.breakevenAcq} wins (a ${A.convBreakeven}% close); below that the week loses money. The number to defend in July is conversion, not spend.`,
-      "indigo");
-    container.innerHTML = h;
+  const gapAcq=(A.targetAcq-A.breakevenAcq).toFixed(2);
+  const bioVal=Math.round(A.bioLeads*A.cpl);
 
-    mk("ovWaterfall", {
-      type:"bar",
-      data:{ labels:["Ad Spend","Revenue","Weekly Profit"],
-        datasets:[{ data:[[0,-A.spendWk],[0,A.rev],[A.spendWk, A.spendWk+A.profit]],
-          backgroundColor:[C.red, C.cyan, C.emerald], borderRadius:6, borderSkipped:false,
-          datalabels:{color:C.text,font:{size:13,weight:"700",family:"Inter"},
-            formatter:(v,ctx)=>["-"+money(A.spendWk),money(A.rev),"+"+money(A.profit)][ctx.dataIndex]} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>["Spend -"+money(A.spendWk),"Revenue "+money(A.rev),"Profit +"+money(A.profit)][c.dataIndex]}}},
-        scales:{x:scaleX(), y:scaleY("$ / week",(v)=>"$"+(v/1000)+"K")} }
-    });
+  let h = `<div class="eyebrow">Longevity — July Plan · Board View</div>
+    <div class="page-title">The Plan Is Profitable at Target — But It Lives or Dies on Conversion</div>
+    <div class="page-sub">At <b>$${A.spendWk.toLocaleString()}/week</b> in ad spend the plan produces <b>${A.leadsWk} leads</b>. With a ${Math.round(A.contact*100)}% contact rate the team reaches ${A.contactedWk} of them, and must close <b>${A.convNeededPct}%</b> to hit the board target of <b>${A.targetAcq} acquisitions/week — $${A.rev.toLocaleString()}/wk, $${A.revMo.toLocaleString()}/mo</b>. Break-even is ${A.breakevenAcq} wins, so the whole month runs on a thin ${gapAcq}-win margin of safety.</div>`;
 
-    mk("ovMargin", {
-      type:"bar",
-      data:{ labels:["Break-Even","Target"],
-        datasets:[{ label:"Acquisitions / wk", data:[A.breakevenAcq, A.targetAcq],
-          backgroundColor:[C.amber, C.emerald], borderRadius:6,
-          datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v+" wins"} }]},
-      options:{ plugins:{legend:{display:false}, tooltip:{...baseTooltip},
-          annotation:{annotations:{
-            zone:{type:"box",yMin:0,yMax:A.breakevenAcq,backgroundColor:"rgba(239,68,68,0.08)",borderWidth:0},
-            be:{type:"line",yMin:A.breakevenAcq,yMax:A.breakevenAcq,borderColor:C.amber,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"Break-even 4.83",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX(), y:scaleY("Acquisitions / week",null,{suggestedMax:8})} }
-    });
+  h += kpiRow([
+    {label:"Weekly Spend", value:money(A.spendWk), sub:"$1,000×5 + $400 Sat/Sun"},
+    {label:"Target Wins / Wk", value:String(A.targetAcq), accent:"accent-green", sub:money(A.rev)+"/wk revenue"},
+    {label:"Close Rate Needed", value:A.convNeededPct+"%", accent:"accent-amber", sub:"of contacted leads"},
+    {label:"ROAS @ Target", value:A.roas+"×", accent:"accent-green", sub:"CAC $"+A.cac+" < $"+A.price},
+    {label:"Weekly Profit", value:money(A.profit), accent:"accent-green", sub:money(A.profitMo)+"/mo"},
+  ]);
 
-    const wkPerMo = 52/12;
-    const profByConv = A.convCurve.map(c=>Math.round((A.contactedWk*(c/100)*A.price - A.spendWk)*wkPerMo));
-    mk("ovConvProfit", {
-      type:"line",
-      data:{ labels:A.convCurve.map(c=>c+"%"),
-        datasets:[{ label:"Monthly profit", data:profByConv,
-          borderColor:C.indigo, borderWidth:2.5, tension:0.35, pointRadius:3, pointHoverRadius:6,
-          pointBackgroundColor:C.indigo, fill:true, backgroundColor:grad("#6366F1",0.25),
-          datalabels:{display:(c)=>c.dataIndex%2===0,align:"top",color:C.textSec,font:{size:9,weight:"600"},formatter:(v)=>"$"+(v/1000).toFixed(0)+"K"} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>"Monthly profit: "+money(c.raw)+"  (conv "+A.convCurve[c.dataIndex]+"%)"}},
-          annotation:{annotations:{
-            be:{type:"line",xMin:2,xMax:2,borderColor:C.amber,borderWidth:1.5,borderDash:[5,4],
-              label:{display:true,content:"break-even 5%",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:9}}},
-            tgt:{type:"line",xMin:4,xMax:4,borderColor:C.emerald,borderWidth:1.5,borderDash:[5,4],
-              label:{display:true,content:"target 6.21%",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.emerald,font:{size:9}}}
-          }}},
-        scales:{x:scaleX("Conversion rate (acq / contacted)"), y:scaleY("$ / month",(v)=>"$"+(v/1000)+"K")} }
-    });
-  }
+  h += `<div class="section-label">The Money</div>`;
+  h += `<div class="chart-grid cols-2">
+    ${card("cPL","The Week's P&L — "+money(A.profit)+" Profit at Target","Ad spend → revenue → weekly profit, at 6 wins",320)}
+    ${card("cConv","6 Wins Needs a 6.21% Close — Every Point Is Worth ~$1,160/wk","Weekly wins & revenue vs conversion rate",320)}
+  </div>`;
 
-  // =========================================================================
-  // VIEW 2 — UNIT ECONOMICS
-  // =========================================================================
-  function renderEconomics() {
-    let h = headline("Unit Economics — The Plan Clears CAC With Room to Spare",
-      `Each of the ${A.targetAcq} target wins costs $${A.cac} to acquire against a $${A.price} sale — a $${(A.price-A.cac).toLocaleString()} contribution per client. The question isn't whether a sale is profitable; it's whether volume holds. ROAS of ${A.roas}× means every $1 of spend returns $${A.roas} in revenue at target.`);
-    h += kpiRow([
-      {label:"CAC @ Target", value:money(A.cac), accent:"accent-green", sub:`vs $${A.price} sale price`},
-      {label:"Contribution / Win", value:money(A.price-A.cac), sub:"price − CAC"},
-      {label:"ROAS @ Target", value:A.roas+"×", accent:"accent-green", sub:"revenue ÷ spend"},
-      {label:"Weekly Profit", value:money(A.profit), accent:"accent-green", sub:`$${A.profitMo.toLocaleString()}/mo`},
-      {label:"Break-Even Wins", value:String(A.breakevenAcq), accent:"accent-amber", sub:`${A.convBreakeven}% close needed`},
-    ]);
-    h += grid2(
-      chartCard("ecRoas","ROAS Crosses 1.0× at 4.83 Wins — Target Sits at 1.24×","Weekly ROAS by acquisition count, with break-even band",360),
-      chartCard("ecCac","CAC Falls as Wins Rise — Fixed Spend, More Clients","Cost per acquisition vs weekly wins ($5,800 fixed spend)",360)
-    );
-    h += chartCard("ecPL","Revenue Overtakes Spend at the 5th Win","Weekly revenue vs fixed spend across acquisition counts",340);
-    h += verdict("Economics Verdict",
-      `The economics are <b>sound but volume-sensitive</b>. Because spend is fixed at $${A.spendWk.toLocaleString()}/week, CAC and ROAS are entirely a function of how many wins the team closes. The 5th win is the pivot: revenue overtakes spend at ${A.breakevenAcq} acquisitions. Everything from win #5 onward is <b>$${A.price.toLocaleString()} of near-pure contribution</b>, because the media cost is already sunk.`,
-      "indigo");
-    container.innerHTML = h;
+  h += `<div class="section-label">The Risk</div>`;
+  h += `<div class="chart-grid cols-2">
+    ${card("cMargin","Margin of Safety — 6 Wins vs 4.83 Break-Even","How close the plan runs to losing money",320)}
+    ${card("cCap","Rep Capacity Is the Bottleneck — 3 Reps Run 33% Over","Sustainable dials/weekday by team size vs 600 demand",320)}
+  </div>`;
 
-    const acqs = [2,3,4,5,6,7,8];
-    const roasArr = acqs.map(a=>+(a*A.price/A.spendWk).toFixed(2));
-    const cacArr = acqs.map(a=>Math.round(A.spendWk/a));
-    const revArr = acqs.map(a=>a*A.price);
+  h += `<div class="section-label">What the Board Should Take Away</div>`;
+  h += `<div class="takeaways">
+    <div class="take green"><div class="take-num">Takeaway 1 · It Works</div>
+      <div class="take-head">At 6 wins the plan clears ${money(A.profit)}/week</div>
+      <div class="take-body">A ${A.roas}× ROAS with <b>CAC of $${A.cac}</b> against a $${A.price} sale — $${(A.price-A.cac).toLocaleString()} contribution per client. This is a <b>structurally sound</b> plan, not a gamble.</div></div>
+    <div class="take amber"><div class="take-num">Takeaway 2 · The One Number</div>
+      <div class="take-head">Everything hinges on a ${A.convNeededPct}% close rate</div>
+      <div class="take-body">Break-even is ${A.convBreakeven}%, target is ${A.convNeededPct}% — a <b>1.2-point band</b>. Every point of close rate ≈ 0.97 wins ($1,160/wk). <b>Defend conversion above all else.</b></div></div>
+    <div class="take red"><div class="take-num">Takeaway 3 · The Constraint</div>
+      <div class="take-head">3 reps can't service the lead flow</div>
+      <div class="take-body">600 dials/weekday demanded vs 450 sustainable — a <b>33% overload</b>. A 4th rep hits exactly 600, lifts contact ${Math.round(A.contact*100)}%→30%+, and is a <b>demand-unlock worth more than its cost</b>.</div></div>
+    <div class="take"><div class="take-num">Takeaway 4 · Free Upside</div>
+      <div class="take-head">The bio link supplies ${Math.round(A.bioShare*100)}% of leads at $0</div>
+      <div class="take-body">${A.bioLeads} organic leads/wk = <b>$${bioVal.toLocaleString()}/wk of free demand</b>, pulling blended CPL to $${A.effCplCurve[0]} vs $${A.cpl} paid. Growing bio share is the cheapest efficiency lever.</div></div>
+  </div>`;
 
-    mk("ecRoas", {
-      type:"line",
-      data:{ labels:acqs.map(a=>a+" wins"),
-        datasets:[{ label:"ROAS", data:roasArr, borderColor:C.cyan, borderWidth:2.5, tension:0.35,
-          pointRadius:4, pointHoverRadius:7, pointBackgroundColor:C.cyan, fill:true, backgroundColor:grad("#06B6D4",0.22),
-          datalabels:{align:"top",color:C.textSec,font:{size:9,weight:"600"},formatter:(v)=>v+"×"} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>"ROAS "+c.raw+"×  ("+acqs[c.dataIndex]+" wins)"}},
-          annotation:{annotations:{
-            zone:{type:"box",yMin:0,yMax:1,backgroundColor:"rgba(239,68,68,0.07)",borderWidth:0},
-            be:{type:"line",yMin:1,yMax:1,borderColor:C.amber,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"break-even 1.0×",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX(), y:scaleY("ROAS (×)",(v)=>v+"×",{suggestedMax:2})} }
-    });
+  h += `<div class="bignote"><div class="l">The Bottom Line</div>
+    <div class="t">This is a <b>profitable plan with one point of fragility</b>. The economics clear CAC comfortably and the free bio channel is a real edge — but the entire outcome sits on holding a <b>${A.convNeededPct}% close rate</b>, with almost no cushion below it. The two moves that de-risk July are <b>(1) protecting conversion</b> through call quality and speed-to-lead, and <b>(2) adding a 4th rep</b> to lift the contact rate that feeds every win. Spend is not the lever — execution is.</div></div>`;
 
-    mk("ecCac", {
-      type:"line",
-      data:{ labels:acqs.map(a=>a+" wins"),
-        datasets:[{ label:"CAC", data:cacArr, borderColor:C.amber, borderWidth:2.5, tension:0.35,
-          pointRadius:4, pointHoverRadius:7, pointBackgroundColor:C.amber,
-          datalabels:{align:"top",color:C.textSec,font:{size:9,weight:"600"},formatter:(v)=>money(v)} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>"CAC "+money(c.raw)+"  ("+acqs[c.dataIndex]+" wins)"}},
-          annotation:{annotations:{
-            price:{type:"line",yMin:A.price,yMax:A.price,borderColor:C.emerald,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"sale price $1,200",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.emerald,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX(), y:scaleY("CAC ($)",(v)=>"$"+v)} }
-    });
+  h += `<div class="footer">Created with Perplexity Computer</div>`;
+  document.getElementById("page").innerHTML = h;
 
-    mk("ecPL", {
-      type:"bar",
-      data:{ labels:acqs.map(a=>a+" wins"),
-        datasets:[
-          {label:"Revenue", data:revArr, backgroundColor:grad("#06B6D4",0.75,0.4), borderColor:C.cyan, borderWidth:1, borderRadius:5, order:2,
-            datalabels:{display:false}},
-          {label:"Fixed Spend", type:"line", data:acqs.map(()=>A.spendWk), borderColor:C.red, borderWidth:2, borderDash:[6,4], pointRadius:0, order:1,
-            datalabels:{display:false}}
-        ]},
-      options:{ plugins:{legend:{labels:{color:C.textSec,font:{size:10},boxWidth:12,padding:12}},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>c.dataset.label+": "+money(c.raw)}}},
-        scales:{x:scaleX(), y:scaleY("$ / week",(v)=>"$"+(v/1000)+"K")} }
-    });
-  }
+  mk("cPL",{ type:"bar",
+    data:{ labels:["Ad Spend","Revenue","Weekly Profit"],
+      datasets:[{ data:[[0,-A.spendWk],[0,A.rev],[A.spendWk,A.spendWk+A.profit]],
+        backgroundColor:[C.red,C.cyan,C.emerald], borderRadius:6, borderSkipped:false,
+        datalabels:{color:C.text,font:{size:13,weight:"700",family:"Inter"},formatter:(v,ctx)=>["-"+money(A.spendWk),money(A.rev),"+"+money(A.profit)][ctx.dataIndex]} }]},
+    options:{ plugins:{legend:{display:false},
+      tooltip:{...baseTooltip,callbacks:{label:(c)=>["Spend -"+money(A.spendWk),"Revenue "+money(A.rev),"Profit +"+money(A.profit)][c.dataIndex]}}},
+      scales:{x:scaleX(),y:scaleY("$ / week",(v)=>"$"+(v/1000)+"K")} } });
 
-  // =========================================================================
-  // VIEW 3 — PATH TO 6 WINS (conversion)
-  // =========================================================================
-  function renderConversion() {
-    let h = headline("Path to 6 Wins — What Conversion Rate Gets Us There",
-      `Working backward from the ${A.targetAcq}-win target: with a ${Math.round(A.contact*100)}% contact rate the team reaches ${A.contactedWk} leads/week, so it must close <b>${A.convNeededPct}%</b> of them. This curve shows the acquisitions and revenue delivered at every plausible close rate — and marks exactly where break-even and target fall.`);
-    h += kpiRow([
-      {label:"Contact Rate", value:Math.round(A.contact*100)+"%", sub:"of leads reached"},
-      {label:"Contacted / Wk", value:String(A.contactedWk), sub:`of ${A.leadsWk} leads`},
-      {label:"Break-Even Close", value:A.convBreakeven+"%", accent:"accent-amber", sub:`${A.breakevenAcq} wins`},
-      {label:"Target Close", value:A.convNeededPct+"%", accent:"accent-green", sub:`${A.targetAcq} wins`},
-      {label:"Rev @ Target", value:money(A.rev), accent:"accent-green", sub:`$${A.revMo.toLocaleString()}/mo`},
-    ]);
-    h += chartCard("cvCurve","Wins Scale Linearly With Close Rate — 6 Wins Needs 6.21%","Acquisitions/week and revenue/week vs conversion (acq / contacted)",380);
-    h += grid2(
-      chartCard("cvRev","Weekly Revenue by Close Rate","Revenue crosses the $5,800 spend line at a 5% close",340),
-      dataTable("Close Rate → Wins → Revenue → Profit",
-        ["Close %","Wins/wk","Rev/wk","Profit/wk","Verdict"],
-        A.convCurve.map((c,i)=>{
-          const wins=A.acqCurve[i], rev=A.revCurve[i], prof=rev-A.spendWk;
-          const isT = Math.abs(c-A.convNeededPct)<0.01;
-          return [ {v:c+"%",cls:isT?"tgt":""}, wins, money(rev),
-            {v:(prof>=0?"+":"")+money(prof),cls:prof>=0?"pos":"neg"},
-            {v: prof<0?"loss":(isT?"TARGET":"profit"), cls: prof<0?"neg":(isT?"tgt":"pos")} ];
-        }))
-    );
-    h += verdict("Conversion Verdict",
-      `Because contact volume is fixed at ${A.contactedWk} leads/week, <b>every point of close rate is worth ~0.97 wins ($1,160/week)</b>. The team needs ${A.convNeededPct}% to hit target and ${A.convBreakeven}% just to break even — a narrow 1.2-point band. This is why call quality, speed-to-lead, and rep skill are the highest-priority operational focus for July.`,
-      "indigo");
-    container.innerHTML = h;
+  mk("cConv",{ type:"line",
+    data:{ labels:A.convCurve.map(c=>c+"%"),
+      datasets:[
+        {label:"Wins / wk", data:A.acqCurve, borderColor:C.indigo, borderWidth:2.5, tension:0.3, pointRadius:3, pointHoverRadius:6, pointBackgroundColor:C.indigo, yAxisID:"yA", order:1,
+          datalabels:{align:"top",color:C.indigo,font:{size:9,weight:"600"},formatter:(v)=>v}},
+        {label:"Revenue / wk", data:A.revCurve, borderColor:C.cyan, borderWidth:1.5, borderDash:[5,3], tension:0.3, pointRadius:2, fill:true, backgroundColor:grad("#06B6D4",0.12), yAxisID:"yR", order:2, datalabels:{display:false}}
+      ]},
+    options:{ interaction:{mode:"index",intersect:false},
+      plugins:{legend:{labels:{color:C.textSec,font:{size:10},boxWidth:12,padding:12}},
+        tooltip:{...baseTooltip,callbacks:{label:(c)=>c.dataset.label==="Revenue / wk"?"Revenue "+money(c.raw):"Wins "+c.raw}},
+        annotation:{annotations:{
+          be:{type:"line",xMin:2,xMax:2,borderColor:C.amber,borderWidth:1.5,borderDash:[5,4],label:{display:true,content:"break-even 5%",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:9}}},
+          tgt:{type:"line",xMin:4,xMax:4,borderColor:C.emerald,borderWidth:1.5,borderDash:[5,4],label:{display:true,content:"target 6.21%",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.emerald,font:{size:9}}}
+        }}},
+      scales:{x:scaleX("Conversion (acq / contacted)"),
+        yA:{...scaleY("Wins / wk"),position:"left"},
+        yR:{position:"right",beginAtZero:true,title:{display:true,text:"Revenue / wk",color:C.textMuted,font:{size:11}},ticks:{color:C.textMuted,font:{size:10},callback:(v)=>"$"+(v/1000)+"K"},grid:{display:false}} } } });
 
-    mk("cvCurve", {
-      type:"line",
-      data:{ labels:A.convCurve.map(c=>c+"%"),
-        datasets:[
-          {label:"Acquisitions / wk", data:A.acqCurve, borderColor:C.indigo, borderWidth:2.5, tension:0.3,
-            pointRadius:4, pointHoverRadius:7, pointBackgroundColor:C.indigo, yAxisID:"yAcq", order:1,
-            datalabels:{align:"top",color:C.indigo,font:{size:9,weight:"600"},formatter:(v)=>v}},
-          {label:"Revenue / wk", data:A.revCurve, type:"line", borderColor:C.cyan, borderWidth:1.5, borderDash:[5,3], tension:0.3,
-            pointRadius:2, fill:true, backgroundColor:grad("#06B6D4",0.12), yAxisID:"yRev", order:2,
-            datalabels:{display:false}}
-        ]},
-      options:{ interaction:{mode:"index",intersect:false},
-        plugins:{legend:{labels:{color:C.textSec,font:{size:10},boxWidth:12,padding:12}},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>c.dataset.label==="Revenue / wk"?"Revenue "+money(c.raw):"Wins "+c.raw}},
-          annotation:{annotations:{
-            be:{type:"line",xMin:2,xMax:2,borderColor:C.amber,borderWidth:1.5,borderDash:[5,4],
-              label:{display:true,content:"break-even 5%",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:9}}},
-            tgt:{type:"line",xMin:4,xMax:4,borderColor:C.emerald,borderWidth:1.5,borderDash:[5,4],
-              label:{display:true,content:"target 6.21% → 6 wins",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.emerald,font:{size:9}}}
-          }}},
-        scales:{x:scaleX("Conversion rate (acq / contacted)"),
-          yAcq:{...scaleY("Wins / week"),position:"left"},
-          yRev:{position:"right",beginAtZero:true,title:{display:true,text:"Revenue / week",color:C.textMuted,font:{size:11}},ticks:{color:C.textMuted,font:{size:10},callback:(v)=>"$"+(v/1000)+"K"},grid:{display:false}} } }
-    });
+  mk("cMargin",{ type:"bar",
+    data:{ labels:["Break-Even","Target"],
+      datasets:[{ data:[A.breakevenAcq,A.targetAcq], backgroundColor:[C.amber,C.emerald], borderRadius:6,
+        datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v+" wins"} }]},
+    options:{ plugins:{legend:{display:false},tooltip:{...baseTooltip},
+      annotation:{annotations:{
+        zone:{type:"box",yMin:0,yMax:A.breakevenAcq,backgroundColor:"rgba(239,68,68,0.08)",borderWidth:0},
+        be:{type:"line",yMin:A.breakevenAcq,yMax:A.breakevenAcq,borderColor:C.amber,borderWidth:2,borderDash:[6,4],label:{display:true,content:"break-even 4.83",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:10,weight:"600"}}}
+      }}},
+      scales:{x:scaleX(),y:scaleY("Acquisitions / week",null,{suggestedMax:8})} } });
 
-    mk("cvRev", {
-      type:"bar",
-      data:{ labels:A.convCurve.map(c=>c+"%"),
-        datasets:[{ label:"Revenue / wk", data:A.revCurve,
-          backgroundColor:(ctx)=> A.revCurve[ctx.dataIndex] >= A.spendWk ? grad("#10B981",0.8,0.4)(ctx) : grad("#EF4444",0.7,0.3)(ctx),
-          borderColor:(ctx)=> A.revCurve[ctx.dataIndex] >= A.spendWk ? C.emerald : C.red, borderWidth:1, borderRadius:5,
-          datalabels:{display:false} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>"Revenue "+money(c.raw)+"  ("+A.convCurve[c.dataIndex]+"% close)"}},
-          annotation:{annotations:{
-            spend:{type:"line",yMin:A.spendWk,yMax:A.spendWk,borderColor:C.textSec,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"spend $5,800",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.textSec,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX("Close rate"), y:scaleY("$ / week",(v)=>"$"+(v/1000)+"K")} }
-    });
-  }
-
-  // =========================================================================
-  // VIEW 4 — REP CAPACITY
-  // =========================================================================
-  function renderCadence() {
-    let h = headline("Rep Capacity — 3 Reps Are Running 33% Over Their Ceiling",
-      `The plan demands ${A.callsNeededWd} dials every weekday. Three reps sustainably handle ${A.cap3} (${A.cap3/A.reps}/rep/day) — so today's team is ${A.overloadPct}% over a healthy calling load. A 4th rep brings capacity to exactly ${A.cap4}, matching demand and lifting the contact rate that drives every downstream win.`);
-    h += kpiRow([
-      {label:"Dials Needed / Weekday", value:String(A.callsNeededWd), accent:"accent-amber", sub:"to service the lead flow"},
-      {label:"3-Rep Capacity", value:String(A.cap3), accent:"accent-red", sub:`${A.overloadPct}% overloaded`},
-      {label:"4-Rep Capacity", value:String(A.cap4), accent:"accent-green", sub:"exactly meets demand"},
-      {label:"Cost / Dial", value:"$"+A.costPerDial, sub:`${A.dialsWk.toLocaleString()} dials/wk`},
-      {label:"Dials / Acquisition", value:String(A.dialsPerAcq), sub:`${A.acqPer1000} wins per 1,000 dials`},
-    ]);
-    h += grid2(
-      chartCard("cdCap","Only a 4th Rep Aligns Capacity With the 600-Dial Demand","Sustainable dials/weekday by team size vs plan demand",360),
-      chartCard("cdLoad","Weekday Load Runs 33% Above the Safe Ceiling","Per-rep daily dials by team size (150/day = healthy)",360)
-    );
-    h += dataTable("Daily Plan — Spend, Leads, Dials & Per-Rep Load",
-      ["Day","Spend","Leads","Dials (team)","Dials/Rep (3)","Load vs Ceiling"],
-      A.days.map((d,i)=>{
-        const team=A.dayCallsTeam[i], perRep=A.dayCallsRep[i];
-        const load = team>0 ? Math.round(perRep/150*100) : 0;
-        return [ d, money(A.daySpend[i]), String(A.dayLeads[i]), team>0?String(team):"—",
-          {v: perRep>0?String(perRep):"—", cls: perRep>150?"neg":"dim"},
-          {v: team>0?load+"%":"—", cls: load>100?"neg":"dim"} ];
-      }).concat([[ {v:"Week",cls:""}, money(A.spendWk), String(A.leadsWk), String(A.dialsWk),
-          {v:"200 avg",cls:"neg"}, {v:"+"+A.overloadPct+"%",cls:"neg"} ]]));
-    h += verdict("Capacity Verdict",
-      `The spend schedule is fine; the <b>calling load is the bottleneck</b>. At ${A.callsNeededWd} dials/weekday, 3 reps are pushed to 200 dials each — a third above the ~150 sustainable ceiling, where connect quality and retention degrade. A 4th rep brings the team to exactly ${A.cap4} dials (150/rep), plausibly lifting contact from ${Math.round(A.contact*100)}% toward 30%+. Since contact rate feeds directly into wins, <b>the 4th rep is a demand-unlock, not just relief</b>.`,
-      "amber");
-    container.innerHTML = h;
-
-    mk("cdCap", {
-      type:"bar",
-      data:{ labels:["3 reps (today)","4 reps","5 reps"],
-        datasets:[{ label:"Sustainable dials / weekday", data:[A.cap3,A.cap4,A.cap5],
-          backgroundColor:[grad("#EF4444",0.8,0.4),grad("#F59E0B",0.8,0.4),grad("#10B981",0.8,0.4)],
-          borderColor:[C.red,C.amber,C.emerald], borderWidth:1, borderRadius:6,
-          datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>c.raw+" sustainable dials/day"}},
-          annotation:{annotations:{
-            demand:{type:"line",yMin:A.callsNeededWd,yMax:A.callsNeededWd,borderColor:C.cyan,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:A.callsNeededWd+" dials/day needed",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.cyan,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX(), y:scaleY("Dials / weekday",null,{suggestedMax:850})} }
-    });
-
-    mk("cdLoad", {
-      type:"bar",
-      data:{ labels:["3 reps","4 reps","5 reps"],
-        datasets:[{ label:"Dials / rep / day", data:[A.callsNeededWd/3, A.callsNeededWd/4, A.callsNeededWd/5].map(v=>Math.round(v)),
-          backgroundColor:(ctx)=>{const v=[200,150,120][ctx.dataIndex]; return v>150?grad("#EF4444",0.8,0.4)(ctx):grad("#10B981",0.8,0.4)(ctx);},
-          borderColor:(ctx)=>[200,150,120][ctx.dataIndex]>150?C.red:C.emerald, borderWidth:1, borderRadius:6,
-          datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v+"/rep"} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>c.raw+" dials/rep/day"}},
-          annotation:{annotations:{
-            ceil:{type:"line",yMin:150,yMax:150,borderColor:C.amber,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"safe ceiling 150/rep",position:"start",backgroundColor:"rgba(15,23,42,.9)",color:C.amber,font:{size:10,weight:"600"}}},
-            zone:{type:"box",yMin:150,yMax:220,backgroundColor:"rgba(239,68,68,0.07)",borderWidth:0}
-          }}},
-        scales:{x:scaleX(), y:scaleY("Dials / rep / day",null,{suggestedMax:220})} }
-    });
-  }
-
-  // =========================================================================
-  // VIEW 5 — FUNNEL & LEAKAGE
-  // =========================================================================
-  function renderFunnel() {
-    let h = headline("Funnel & Leakage — Where the Weekly Lead Flow Actually Goes",
-      `Of ${A.leadsWk} leads generated each week, only ${A.contactedWk} get contacted (${Math.round(A.contact*100)}%) and ${A.targetAcq} convert. The biggest leak is the <b>${A.neverContacted} leads that are never reached</b> — at the plan's own close rate that pool represents $${A.trappedUncontacted.toLocaleString()}/week of unrealized revenue sitting in the top of the funnel.`);
-    h += kpiRow([
-      {label:"Leads / Wk", value:String(A.leadsWk), sub:"top of funnel"},
-      {label:"Contacted", value:String(A.contactedWk), accent:"accent-amber", sub:`${Math.round(A.contact*100)}% of leads`},
-      {label:"Never Contacted", value:String(A.neverContacted), accent:"accent-red", sub:"largest leak"},
-      {label:"Wins", value:String(A.targetAcq), accent:"accent-green", sub:`${A.convNeededPct}% of contacted`},
-      {label:"Trapped Value", value:"$"+(A.trappedUncontacted/1000).toFixed(1)+"K", accent:"accent-red", sub:"/wk in uncontacted pool"},
-    ]);
-    h += grid2(
-      chartCard("fnStages","The Funnel Collapses From 387 Leads to 6 Wins","Weekly volume surviving each stage (log-scaled)",360),
-      chartCard("fnLevers","Contact & Budget Are the Highest-Yield Levers","Added wins/week per realistic single-lever move",360)
-    );
-    h += dataTable("Stage-by-Stage Leakage (per week)",
-      ["Stage","Volume","Survival","Lost Here","Value of Loss"],
-      [
-        ["Leads generated", String(A.leadsWk), "100%", "—", "—"],
-        ["Contacted", String(A.contactedWk), Math.round(A.contact*100)+"%",
-          {v:String(A.neverContacted),cls:"neg"}, {v:"$"+(A.trappedUncontacted/1000).toFixed(1)+"K",cls:"neg"}],
-        ["Acquired", String(A.targetAcq), A.convNeededPct+"% of contacted",
-          {v:String(A.contactedNotAcq),cls:"hot"}, {v:money(Math.round(A.contactedNotAcq*A.convNeeded*A.price)),cls:"hot"}],
-        [{v:"Revenue",cls:""}, {v:money(A.rev),cls:"pos"}, "—", "—", "—"]
-      ]);
-    h += verdict("Funnel Verdict",
-      `The plan's leverage is at the <b>top of the funnel, not the bottom</b>. ${A.neverContacted} leads/week are paid for but never called. Lifting contact from ${Math.round(A.contact*100)}% is the single fastest way to add wins without spending another dollar — which is exactly why rep capacity (the 4th rep) and speed-to-lead matter so much. The bottleneck is <b>reach, then close</b>.`,
-      "red");
-    container.innerHTML = h;
-
-    mk("fnStages", {
-      type:"bar",
-      data:{ labels:["Leads","Contacted","Wins"],
-        datasets:[{ data:[A.leadsWk, A.contactedWk, A.targetAcq],
-          backgroundColor:[grad("#6366F1",0.8,0.4),grad("#F59E0B",0.8,0.4),grad("#10B981",0.85,0.45)],
-          borderColor:[C.indigo,C.amber,C.emerald], borderWidth:1, borderRadius:6,
-          datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v} }]},
-      options:{ plugins:{legend:{display:false}, tooltip:{...baseTooltip, callbacks:{label:(c)=>c.raw+" / week"}}},
-        scales:{x:scaleX(), y:{type:"logarithmic",title:{display:true,text:"Volume / week (log)",color:C.textMuted,font:{size:11}},ticks:{color:C.textMuted,font:{size:10},callback:(v)=>[1,10,100,1000].includes(v)?v:null},grid:{color:C.grid}}} }
-    });
-
-    const lev = A.levers.slice().sort((a,b)=>a[1]-b[1]);
-    mk("fnLevers", {
-      type:"bar",
-      data:{ labels:lev.map(l=>l[0]),
-        datasets:[{ label:"Added wins / wk", data:lev.map(l=>l[1]),
-          backgroundColor:grad("#06B6D4",0.8,0.35), borderColor:C.cyan, borderWidth:1, borderRadius:5,
-          datalabels:{anchor:"end",align:"right",color:C.text,font:{size:11,weight:"700"},formatter:(v,c)=>"+"+v+" ("+money(lev[c.dataIndex][2])+")"} }]},
-      options:{ indexAxis:"y",
-        plugins:{legend:{display:false}, tooltip:{...baseTooltip, callbacks:{label:(c)=>"+"+c.raw+" wins/wk = "+money(lev[c.dataIndex][2])+"/wk"}}},
-        scales:{x:scaleY("Added wins / week",null,{suggestedMax:1.5}), y:scaleX()} }
-    });
-  }
-
-  // =========================================================================
-  // VIEW 6 — LEAD MIX
-  // =========================================================================
-  function renderLeadmix() {
-    const bioVal = Math.round(A.bioLeads*A.cpl);
-    let h = headline("Lead Mix — The Bio Link Is Free Demand Worth $"+bioVal.toLocaleString()+"/Week",
-      `${Math.round(A.bioShare*100)}% of leads (${A.bioLeads}/week) arrive through the organic bio link at $0 cost. That channel offsets $${bioVal.toLocaleString()}/week of paid demand and pulls the blended cost per lead below the $${A.cpl} paid rate. Growing bio share is the cheapest lever to improve efficiency.`);
-    h += kpiRow([
-      {label:"Total Leads / Wk", value:String(A.leadsWk), sub:"paid + bio"},
-      {label:"Bio Leads", value:String(A.bioLeads), accent:"accent-green", sub:`${Math.round(A.bioShare*100)}% · $0 CPL`},
-      {label:"Paid Leads", value:String(A.paidLeads), sub:`$${A.cpl} CPL`},
-      {label:"Bio Value / Wk", value:money(bioVal), accent:"accent-green", sub:"free demand"},
-      {label:"Blended CPL Today", value:"$"+A.effCplCurve[0], accent:"accent-green", sub:`vs $${A.cpl} paid`},
-    ]);
-    h += grid2(
-      chartCard("lmDonut","Bio Link Supplies 30% of Leads at Zero Cost","Weekly lead mix by channel",360),
-      chartCard("lmCpl","Growing Bio Share Drives Blended CPL Down Fast","Blended cost per lead vs bio share of total",360)
-    );
-    h += verdict("Lead Mix Verdict",
-      `Bio leads are the <b>cheapest lever to improve the economics</b>. The ${A.bioLeads} bio leads/week are equivalent to $${bioVal.toLocaleString()} of paid demand the plan gets for free. Because they arrive at $0 CPL, they pull blended cost from $${A.cpl} down to $${A.effCplCurve[0]} today; lifting bio share to 40% cuts it to $${A.effCplCurve[2]} — a 14% media-efficiency gain with zero added spend.`,
-      "indigo");
-    container.innerHTML = h;
-
-    mk("lmDonut", {
-      type:"doughnut",
-      data:{ labels:["Bio (free)","Paid ($15 CPL)"],
-        datasets:[{ data:[A.bioLeads,A.paidLeads],
-          backgroundColor:[C.emerald,C.indigo], borderColor:"rgba(15,23,42,0.6)", borderWidth:2,
-          datalabels:{color:C.text,font:{size:14,weight:"700"},formatter:(v)=>Math.round(v/A.leadsWk*100)+"%"} }]},
-      options:{ cutout:"62%",
-        plugins:{legend:{position:"bottom",labels:{color:C.textSec,font:{size:11},boxWidth:12,padding:14}},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>c.label+": "+c.raw+" leads"}}} }
-    });
-
-    mk("lmCpl", {
-      type:"line",
-      data:{ labels:A.bioShareCurve.map(b=>b+"% bio"),
-        datasets:[{ label:"Blended CPL", data:A.effCplCurve,
-          borderColor:C.emerald, borderWidth:2.5, tension:0.3, pointRadius:4, pointHoverRadius:7, pointBackgroundColor:C.emerald,
-          fill:true, backgroundColor:grad("#10B981",0.2),
-          datalabels:{align:"top",color:C.textSec,font:{size:9,weight:"600"},formatter:(v)=>"$"+v} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>"Blended CPL $"+c.raw+"  ("+A.bioShareCurve[c.dataIndex]+"% bio)"}},
-          annotation:{annotations:{
-            paid:{type:"line",yMin:A.cpl,yMax:A.cpl,borderColor:C.textSec,borderWidth:2,borderDash:[6,4],
-              label:{display:true,content:"$15 paid CPL",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.textSec,font:{size:10,weight:"600"}}}
-          }}},
-        scales:{x:scaleX("Bio share of leads →"), y:scaleY("Blended cost / lead ($)",(v)=>"$"+v,{suggestedMax:16})} }
-    });
-  }
-
-  // =========================================================================
-  // VIEW 7 — SENSITIVITY & RISK
-  // =========================================================================
-  function renderSensitivity() {
-    let h = headline("Sensitivity & Risk — The Two Dials That Decide the Month",
-      `Wins are the product of two operational rates: <b>contact</b> (how many leads we reach) and <b>close</b> (how many we convert). This grid maps weekly wins across every realistic combination, and the scatter shows which combinations clear break-even. The green frontier is where July needs to operate.`);
-    h += kpiRow([
-      {label:"Plan Operating Point", value:Math.round(A.contact*100)+"% × "+A.convNeededPct+"%", accent:"accent-green", sub:"contact × close = 6 wins"},
-      {label:"Break-Even Line", value:A.breakevenAcq+" wins", accent:"accent-amber", sub:"below = loss"},
-      {label:"Downside (20%×4%)", value:(Math.round(A.leadsWk*0.20*0.04*100)/100)+" wins", accent:"accent-red", sub:"loss scenario"},
-      {label:"Upside (30%×7%)", value:(Math.round(A.leadsWk*0.30*0.07*100)/100)+" wins", accent:"accent-green", sub:"stretch scenario"},
-    ]);
-    h += chartCard("snScatter","Only the Top-Right Zone Clears Break-Even","Each point = a contact×close scenario; size = weekly wins, color = profit/loss",400);
-    h += dataTable("Weekly Wins by Contact Rate × Close Rate",
-      ["Contact ↓ / Close →"].concat(A.convRange.map(v=>v+"%")),
-      A.contRange.map((cr,i)=>[{v:cr+"%",cls:""}].concat(A.grid[i].map(w=>{
-        const cls = w>=A.targetAcq?"pos":(w>=A.breakevenAcq?"hot":"neg");
-        return {v:w, cls};
-      }))));
-    h += verdict("Risk Verdict",
-      `The plan sits at <b>${Math.round(A.contact*100)}% contact × ${A.convNeededPct}% close</b> — right on the target frontier, with no cushion. A single dial slipping (contact to 20% or close to 5%) drops the week below break-even. The grid makes the mandate clear: <b>protect both rates simultaneously</b>. The safest structural move is lifting contact via the 4th rep, which shifts the entire row up and buys margin against a close-rate dip.`,
-      "amber");
-    container.innerHTML = h;
-
-    // scatter: x=contact, y=close, r=wins, color=profit sign
-    const pts = [];
-    A.contRange.forEach((cr,i)=>A.convRange.forEach((cv,j)=>{
-      const w = A.grid[i][j];
-      pts.push({x:cr, y:cv, wins:w, profit:w*A.price - A.spendWk});
-    }));
-    mk("snScatter", {
-      type:"bubble",
-      data:{ datasets:[{ label:"Scenario",
-        data:pts.map(p=>({x:p.x,y:p.y,r:Math.max(4,Math.min(22,p.wins*3.2)),wins:p.wins,profit:p.profit})),
-        backgroundColor:pts.map(p=>p.profit>=0?"rgba(16,185,129,0.5)":"rgba(239,68,68,0.4)"),
-        borderColor:pts.map(p=>p.profit>=0?C.emerald:C.red), borderWidth:1.5,
-        datalabels:{display:(c)=>c.dataset.data[c.dataIndex].wins>=A.breakevenAcq,color:C.text,font:{size:9,weight:"700"},formatter:(v)=>v.wins} }]},
-      options:{ plugins:{legend:{display:false},
-          tooltip:{...baseTooltip, callbacks:{label:(c)=>{const d=c.raw;return d.x+"% contact × "+d.y+"% close → "+d.wins+" wins ("+(d.profit>=0?"+":"")+money(d.profit)+"/wk)";}}},
-          annotation:{annotations:{
-            op:{type:"point",xValue:Math.round(A.contact*100),yValue:A.convNeededPct,radius:6,backgroundColor:"rgba(99,102,241,0)",borderColor:C.indigo,borderWidth:2,
-              label:{display:false}},
-            opl:{type:"label",xValue:Math.round(A.contact*100),yValue:A.convNeededPct,content:["◀ Plan target"],color:C.indigo,font:{size:10,weight:"700"},xAdjust:52,backgroundColor:"rgba(15,23,42,.85)",padding:4}
-          }}},
-        scales:{x:{...scaleX("Contact rate →"),ticks:{color:C.textMuted,font:{size:10},callback:(v)=>v+"%"},min:10,max:40,grid:{color:C.grid}},
-          y:{...scaleY("Close rate →"),ticks:{color:C.textMuted,font:{size:10},callback:(v)=>v+"%"},min:2,suggestedMax:9}} }
-    });
-  }
-
-  // =========================================================================
-  // ROUTER
-  // =========================================================================
-  const VIEWS = { overview:renderOverview, economics:renderEconomics, conversion:renderConversion,
-    cadence:renderCadence, funnel:renderFunnel, leadmix:renderLeadmix, sensitivity:renderSensitivity };
-  function render(view) {
-    destroyCharts();
-    (VIEWS[view] || renderOverview)();
-    window.scrollTo(0,0);
-  }
-  document.querySelectorAll(".nav-item").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      render(btn.dataset.view);
-      const sb=$("#sidebar"), ov=$("#sidebarOverlay"); if(sb)sb.classList.remove("open"); if(ov)ov.classList.remove("active");
-    });
-  });
-  const mt=$("#menuToggle"), sb=$("#sidebar"), ov=$("#sidebarOverlay");
-  if(mt) mt.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("active");});
-  if(ov) ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("active");});
-
-  render("overview");
+  mk("cCap",{ type:"bar",
+    data:{ labels:["3 reps (today)","4 reps","5 reps"],
+      datasets:[{ data:[A.cap3,A.cap4,A.cap5],
+        backgroundColor:[grad("#EF4444",0.8,0.4),grad("#F59E0B",0.8,0.4),grad("#10B981",0.8,0.4)],
+        borderColor:[C.red,C.amber,C.emerald], borderWidth:1, borderRadius:6,
+        datalabels:{anchor:"end",align:"top",color:C.text,font:{size:13,weight:"700"},formatter:(v)=>v} }]},
+    options:{ plugins:{legend:{display:false},tooltip:{...baseTooltip,callbacks:{label:(c)=>c.raw+" sustainable dials/day"}},
+      annotation:{annotations:{
+        demand:{type:"line",yMin:A.callsNeededWd,yMax:A.callsNeededWd,borderColor:C.cyan,borderWidth:2,borderDash:[6,4],label:{display:true,content:"600 dials/day needed",position:"end",backgroundColor:"rgba(15,23,42,.9)",color:C.cyan,font:{size:10,weight:"600"}}}
+      }}},
+      scales:{x:scaleX(),y:scaleY("Dials / weekday",null,{suggestedMax:850})} } });
 });
 </script>
 </body>
