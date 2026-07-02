@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -99,14 +100,57 @@ var PLAN = {
   ]
 };
 
-/* ---- Chart.js defaults to match CEO suite ---- */
+/* ============================================================
+   PREMIUM CHART SYSTEM — ported verbatim from CEO Performance Suite
+   ============================================================ */
+Chart.register(ChartDataLabels);
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = CO.sec;
+Chart.defaults.responsive = true;
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.plugins.datalabels.display = false; /* opt-in per dataset */
 var charts = [];
 function killCharts(){ charts.forEach(function(c){ try{c.destroy();}catch(e){} }); charts = []; }
-function axis(opts){ return Object.assign({ grid:{ color:CO.grid, drawBorder:false }, ticks:{ color:CO.muted } }, opts||{}); }
-function noGrid(){ return { grid:{ display:false }, ticks:{ color:CO.muted } }; }
+
+/* ---- gradient fills (the premium signal on bars/areas) ---- */
+function hexA(hex,a){ var h=hex.replace('#',''); var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+function vGrad(ctx,hex){ /* vertical bar gradient: bright top → deep base */
+  var a=ctx.chart.chartArea; if(!a) return hex;
+  var g=ctx.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);
+  g.addColorStop(0,hexA(hex,0.95)); g.addColorStop(1,hexA(hex,0.55)); return g; }
+function hGrad(ctx,hex){ /* horizontal bar gradient: deep left → bright right */
+  var a=ctx.chart.chartArea; if(!a) return hex;
+  var g=ctx.chart.ctx.createLinearGradient(a.left,0,a.right,0);
+  g.addColorStop(0,hexA(hex,0.6)); g.addColorStop(1,hexA(hex,0.95)); return g; }
+function areaGrad(ctx,hex){ /* line area fill */
+  var a=ctx.chart.chartArea; if(!a) return hexA(hex,0.12);
+  var g=ctx.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);
+  g.addColorStop(0,hexA(hex,0.28)); g.addColorStop(1,hexA(hex,0.01)); return g; }
+
+/* ---- datalabel formatters ---- */
+function dlK(v){ if(v==null||v===0) return ''; v=+v;
+  if(Math.abs(v)>=1000000) return '$'+(v/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+  if(Math.abs(v)>=1000) return '$'+(v/1000).toFixed(1).replace(/\.0$/,'')+'K';
+  return '$'+v; }
+function dlNum(v){ if(v==null||v==='') return ''; v=+v; return v>=100?Math.round(v):v.toFixed(1).replace(/\.0$/,''); }
+function dlX(v){ return v==null?'':(+v).toFixed(2)+'\u00d7'; }
+function dlPct(v){ return v==null?'':(+v).toFixed(0)+'%'; }
+
+/* ---- shared styled tooltip (dark glass) ---- */
+var TT = { enabled:true, mode:'index', intersect:false,
+  backgroundColor:'rgba(15,23,42,0.95)', titleColor:'#F1F5F9', bodyColor:'#94A3B8',
+  borderColor:'rgba(148,163,184,0.2)', borderWidth:1, padding:12, cornerRadius:10,
+  displayColors:true, boxPadding:4, titleFont:{size:12,weight:'600'}, bodyFont:{size:12} };
+
+/* ---- refined axes ---- */
+function axis(opts){ return Object.assign({ grid:{ color:'rgba(148,163,184,0.05)', drawBorder:false }, border:{display:false}, ticks:{ color:CO.muted, font:{size:11} } }, opts||{}); }
+function noGrid(){ return { grid:{ display:false }, border:{display:false}, ticks:{ color:CO.muted, font:{size:11} } }; }
+
+/* ---- datalabel presets ---- */
+function dlTop(color,fmt){ return { display:true, anchor:'end', align:'end', offset:2, clamp:true, color:color||CO.text, font:{size:11,weight:'700'}, formatter:fmt||dlNum }; }
+function dlEndH(color,fmt){ return { display:true, anchor:'end', align:'right', offset:4, clamp:true, color:color||CO.text, font:{size:11,weight:'700'}, formatter:fmt||dlNum }; }
+function dlPoint(color,fmt){ return { display:true, anchor:'end', align:'top', offset:6, color:color||CO.text, font:{size:10,weight:'700'}, formatter:fmt||dlNum }; }
 
 function kpi(label, value, sub, accent){
   return '<div class="kpi-card'+(accent?' accent-'+accent:'')+'">'+
@@ -142,8 +186,8 @@ overview:function(c){
   '</div>'+
 
   '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">The plan clears 6/week only above 143 contacted leads</div><div class="chart-insight-stat">Weekly funnel · leads → contacted (37%) → acquisitions</div><div class="chart-wrap"><canvas id="cFunnel" height="230"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">At target, weekly revenue outruns spend 1.24×</div><div class="chart-insight-stat">$7,200 revenue @ 6 acq vs $5,800 spend · model lands at $5,150</div><div class="chart-wrap"><canvas id="cRevSpend" height="230"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">The plan clears 6/week only above 143 contacted leads</div><div class="chart-insight-stat">Weekly funnel · leads → contacted (37%) → acquisitions</div><div class="chart-wrap" style="height:300px"><canvas id="cFunnel" height="230"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">At target, weekly revenue outruns spend 1.24×</div><div class="chart-insight-stat">$7,200 revenue @ 6 acq vs $5,800 spend · model lands at $5,150</div><div class="chart-wrap" style="height:300px"><canvas id="cRevSpend" height="230"></canvas></div></div>'+
   '</div>'+
 
   '<div class="overview-impact-banner">'+
@@ -154,12 +198,24 @@ overview:function(c){
   '</div>';
 
   killCharts();
+  var fCol=[CO.cyan,CO.indigo,CO.emerald];
   charts.push(new Chart(document.getElementById('cFunnel'),{type:'bar',
-    data:{labels:['Leads','Contacted (37%)','Acquisitions'],datasets:[{data:[387,143,6],backgroundColor:[CO.cyan,CO.indigo,CO.emerald],borderRadius:8,barThickness:40}]},
-    options:{indexAxis:'y',layout:{padding:{left:6}},plugins:{legend:{display:false}},scales:{x:axis(),y:Object.assign(noGrid(),{ticks:{color:CO.text,crossAlign:'far',padding:6}})}}}));
+    data:{labels:['Leads','Contacted (37%)','Acquisitions'],datasets:[{data:[387,143,6],
+      backgroundColor:function(ctx){return hGrad(ctx,fCol[ctx.dataIndex]||CO.indigo);},
+      hoverBackgroundColor:function(ctx){return hexA(fCol[ctx.dataIndex]||CO.indigo,1);},
+      borderRadius:8,borderSkipped:false,barPercentage:0.62,categoryPercentage:0.72}]},
+    options:{indexAxis:'y',layout:{padding:{left:6,right:34}},animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:TT,datalabels:dlEndH(CO.text,dlNum)},
+      scales:{x:axis({grid:{display:false}}),y:Object.assign(noGrid(),{ticks:{color:CO.text,font:{size:12,weight:'600'},crossAlign:'far',padding:6}})}}}));
+  var rCol=[CO.indigo,CO.emerald,CO.amber];
   charts.push(new Chart(document.getElementById('cRevSpend'),{type:'bar',
-    data:{labels:['Spend','Revenue @ target','Revenue @ model'],datasets:[{data:[5800,7200,5150],backgroundColor:[CO.indigo,CO.emerald,CO.amber],borderRadius:8,barThickness:56}]},
-    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,callback:function(v){return '$'+(v/1000)+'k';}}})}}}));
+    data:{labels:['Spend','Revenue @ target','Revenue @ model'],datasets:[{data:[5800,7200,5150],
+      backgroundColor:function(ctx){return vGrad(ctx,rCol[ctx.dataIndex]||CO.indigo);},
+      hoverBackgroundColor:function(ctx){return hexA(rCol[ctx.dataIndex]||CO.indigo,1);},
+      borderRadius:10,borderSkipped:false,barPercentage:0.55,categoryPercentage:0.7}]},
+    options:{layout:{padding:{top:26}},animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:TT,datalabels:dlTop(CO.text,dlK)},
+      scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+(v/1000)+'k';}}})}}}));
 },
 
 /* ---------- ECONOMICS ---------- */
@@ -177,8 +233,8 @@ economics:function(c){
   '</div>'+
 
   '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">$15 a lead compounds to $967 an acquisition</div><div class="chart-insight-stat">Cost climbs at each stage of the funnel (log scale)</div><div class="chart-wrap"><canvas id="cCostChain" height="250"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">Break-even sits between 5 and 6 acquisitions</div><div class="chart-insight-stat">Weekly profit = revenue − $5,800 spend</div><div class="chart-wrap"><canvas id="cProfit" height="250"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">$15 a lead compounds to $967 an acquisition</div><div class="chart-insight-stat">Cost climbs at each stage of the funnel (log scale)</div><div class="chart-wrap" style="height:300px"><canvas id="cCostChain" height="250"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">Break-even sits between 5 and 6 acquisitions</div><div class="chart-insight-stat">Weekly profit = revenue − $5,800 spend</div><div class="chart-wrap" style="height:300px"><canvas id="cProfit" height="250"></canvas></div></div>'+
   '</div>'+
 
   '<div class="data-table-card"><div class="chart-card-title">Economics detail — per week &amp; per month</div>'+
@@ -198,13 +254,24 @@ economics:function(c){
   '</div>';
 
   killCharts();
+  var ccCol=[CO.cyan,CO.indigo,CO.amber];
   charts.push(new Chart(document.getElementById('cCostChain'),{type:'bar',
-    data:{labels:['Cost / lead','Cost / contacted','Cost / acquisition'],datasets:[{data:[15,41,967],backgroundColor:[CO.cyan,CO.indigo,CO.amber],borderRadius:8,barThickness:56}]},
-    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:Object.assign(axis(),{type:'logarithmic',ticks:{color:CO.muted,callback:function(v){return '$'+v;}}})}}}));
+    data:{labels:['Cost / lead','Cost / contacted','Cost / acquisition'],datasets:[{data:[15,41,967],
+      backgroundColor:function(ctx){return vGrad(ctx,ccCol[ctx.dataIndex]||CO.indigo);},
+      hoverBackgroundColor:function(ctx){return hexA(ccCol[ctx.dataIndex]||CO.indigo,1);},
+      borderRadius:10,borderSkipped:false,barPercentage:0.55,categoryPercentage:0.7}]},
+    options:{layout:{padding:{top:26}},animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:TT,datalabels:dlTop(CO.text,function(v){return '$'+(+v).toLocaleString();})},
+      scales:{x:noGrid(),y:Object.assign(axis(),{type:'logarithmic',ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+v;}}})}}}));
   var acqx=[3,4,5,6,7,8], profit=acqx.map(function(a){return a*1200-5800;});
   charts.push(new Chart(document.getElementById('cProfit'),{type:'bar',
-    data:{labels:acqx.map(function(a){return a+' acq';}),datasets:[{data:profit,backgroundColor:profit.map(function(p){return p>=0?CO.emerald:CO.red;}),borderRadius:6}]},
-    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,callback:function(v){return '$'+(v/1000).toFixed(1)+'k';}}})}}}));
+    data:{labels:acqx.map(function(a){return a+' acq';}),datasets:[{data:profit,
+      backgroundColor:function(ctx){return vGrad(ctx,profit[ctx.dataIndex]>=0?CO.emerald:CO.red);},
+      hoverBackgroundColor:function(ctx){return hexA(profit[ctx.dataIndex]>=0?CO.emerald:CO.red,1);},
+      borderRadius:8,borderSkipped:false,barPercentage:0.6,categoryPercentage:0.72}]},
+    options:{layout:{padding:{top:22,bottom:14}},animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true,anchor:function(ctx){return profit[ctx.dataIndex]>=0?'end':'start';},align:function(ctx){return profit[ctx.dataIndex]>=0?'end':'start';},offset:3,color:function(ctx){return profit[ctx.dataIndex]>=0?CO.emerald:CO.red;},font:{size:11,weight:'700'},formatter:function(v){return (v>=0?'+$':'\u2212$')+Math.abs(v/1000).toFixed(1)+'k';}}},
+      scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+(v/1000).toFixed(1)+'k';}}})}}}));
 },
 
 /* ---------- CADENCE ---------- */
@@ -221,7 +288,7 @@ cadence:function(c){
     kpi('WEEKEND LEADS','53','Sat + Sun · worked Monday','green')+
   '</div>'+
 
-  '<div class="chart-card"><div class="chart-insight-title">Weekday call load holds at 600/day; weekend leads bank for Monday</div><div class="chart-insight-stat">Leads (bars) vs calls (line) by day of week — grey bars are weekend leads, not lost</div><div class="chart-wrap"><canvas id="cDaily" height="150"></canvas></div></div>'+
+  '<div class="chart-card"><div class="chart-insight-title">Weekday call load holds at 600/day; weekend leads bank for Monday</div><div class="chart-insight-stat">Leads (bars) vs calls (line) by day of week — grey bars are weekend leads, not lost</div><div class="chart-wrap" style="height:300px"><canvas id="cDaily"></canvas></div></div>'+
 
   '<div class="data-table-card"><div class="chart-card-title">Daily plan</div>'+
     '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Day</th><th>Spend</th><th>Leads</th><th>Contacted (37%)</th><th>Calls (9/lead)</th><th>Calls / Rep</th></tr></thead><tbody>'+
@@ -235,12 +302,21 @@ cadence:function(c){
   killCharts();
   charts.push(new Chart(document.getElementById('cDaily'),{type:'bar',
     data:{labels:PLAN.daily.map(function(x){return x.d;}),datasets:[
-      {type:'bar',label:'Leads',data:PLAN.daily.map(function(x){return x.leads;}),backgroundColor:PLAN.daily.map(function(x){return x.wk?CO.cyan:'rgba(148,163,184,.35)';}),borderRadius:6,yAxisID:'y',order:2},
-      {type:'line',label:'Calls',data:PLAN.daily.map(function(x){return x.calls;}),borderColor:CO.indigo,backgroundColor:CO.indigo,tension:.35,pointRadius:4,pointBackgroundColor:CO.indigo,yAxisID:'y1',order:1}
+      {type:'bar',label:'Leads',data:PLAN.daily.map(function(x){return x.leads;}),
+        backgroundColor:function(ctx){return vGrad(ctx,PLAN.daily[ctx.dataIndex].wk?CO.cyan:'#64748B');},
+        hoverBackgroundColor:function(ctx){return hexA(PLAN.daily[ctx.dataIndex].wk?CO.cyan:'#94A3B8',1);},
+        borderRadius:7,borderSkipped:false,barPercentage:0.62,categoryPercentage:0.72,yAxisID:'y',order:2,
+        datalabels:{display:true,anchor:'end',align:'end',offset:2,color:function(ctx){return PLAN.daily[ctx.dataIndex].wk?CO.cyan:CO.muted;},font:{size:10,weight:'700'},formatter:function(v){return Math.round(v);}}},
+      {type:'line',label:'Calls',data:PLAN.daily.map(function(x){return x.calls;}),
+        borderColor:CO.indigo,backgroundColor:function(ctx){return areaGrad(ctx,CO.indigo);},fill:true,
+        borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:CO.indigo,pointBorderColor:'#0B1120',pointBorderWidth:2,yAxisID:'y1',order:1,
+        datalabels:{display:true,anchor:'end',align:'top',offset:8,color:CO.indigo,font:{size:10,weight:'700'},formatter:function(v){return v;}}}
     ]},
-    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:noGrid(),
-      y:Object.assign(axis(),{position:'left',title:{display:true,text:'Leads',color:CO.muted}}),
-      y1:{position:'right',grid:{display:false},ticks:{color:CO.muted},title:{display:true,text:'Calls',color:CO.muted}}}}}));
+    options:{layout:{padding:{top:26}},animation:{duration:800},interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
+      scales:{x:noGrid(),
+      y:Object.assign(axis(),{position:'left',title:{display:true,text:'Leads',color:CO.muted,font:{size:11}}}),
+      y1:{position:'right',grid:{display:false},border:{display:false},ticks:{color:CO.muted,font:{size:11}},title:{display:true,text:'Calls',color:CO.muted,font:{size:11}}}}}}));
 },
 
 /* ---------- LEAD MIX ---------- */
@@ -257,8 +333,8 @@ leadmix:function(c){
   '</div>'+
 
   '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">Nearly a third of demand arrives free from the bio</div><div class="chart-insight-stat">Weekly split · website bio vs other paid</div><div class="chart-wrap"><canvas id="cMix" height="240"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">Mix stays constant as spend scales across the month</div><div class="chart-insight-stat">Leads per week · stacked bio + paid</div><div class="chart-wrap"><canvas id="cMixMonth" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">Nearly a third of demand arrives free from the bio</div><div class="chart-insight-stat">Weekly split · website bio vs other paid</div><div class="chart-wrap" style="height:300px"><canvas id="cMix" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">Mix stays constant as spend scales across the month</div><div class="chart-insight-stat">Leads per week · stacked bio + paid</div><div class="chart-wrap" style="height:300px"><canvas id="cMixMonth" height="240"></canvas></div></div>'+
   '</div>'+
 
   '<div class="std-insight">The <b style="color:#fff">116 weekly bio leads</b> (464/month) are the highest-intent, lowest-friction segment in the plan — they chose to click through from the profile. Protecting and growing the bio share is the cheapest lever to improve blended CAC without raising ad spend.</div>'+
@@ -266,14 +342,22 @@ leadmix:function(c){
 
   killCharts();
   charts.push(new Chart(document.getElementById('cMix'),{type:'doughnut',
-    data:{labels:['Website bio (30%)','Other paid (70%)'],datasets:[{data:[116,271],backgroundColor:[CO.emerald,CO.indigo],borderColor:'rgba(11,17,32,.6)',borderWidth:3}]},
-    options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:CO.sec,usePointStyle:true,padding:16}}}}}));
+    data:{labels:['Website bio (30%)','Other paid (70%)'],datasets:[{data:[116,271],
+      backgroundColor:[CO.emerald,CO.indigo],hoverBackgroundColor:[hexA(CO.emerald,1),hexA(CO.indigo,1)],
+      borderColor:'rgba(11,17,32,.55)',borderWidth:3,hoverOffset:8,spacing:2}]},
+    options:{cutout:'64%',animation:{animateRotate:true,duration:800},
+      plugins:{legend:{position:'bottom',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:18,font:{size:12}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ' '+ctx.label.replace(/ \(.*\)/,'')+': '+ctx.raw+' leads';}}}),
+        datalabels:{display:true,color:'#fff',font:{size:13,weight:'800'},formatter:function(v,ctx){return Math.round(v/ctx.chart._metasets[0].total*100)+'%';}}}}}));
   charts.push(new Chart(document.getElementById('cMixMonth'),{type:'bar',
     data:{labels:['Week 1','Week 2','Week 3','Week 4'],datasets:[
-      {label:'Website bio',data:[116,116,116,116],backgroundColor:CO.emerald,borderRadius:{topLeft:0,topRight:0,bottomLeft:6,bottomRight:6}},
-      {label:'Other paid',data:[271,271,271,271],backgroundColor:CO.indigo,borderRadius:6}
+      {label:'Website bio',data:[116,116,116,116],backgroundColor:function(ctx){return vGrad(ctx,CO.emerald);},hoverBackgroundColor:hexA(CO.emerald,1),borderRadius:{bottomLeft:7,bottomRight:7},borderSkipped:false,barPercentage:0.6,categoryPercentage:0.7,
+        datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},formatter:function(v){return v;}}},
+      {label:'Other paid',data:[271,271,271,271],backgroundColor:function(ctx){return vGrad(ctx,CO.indigo);},hoverBackgroundColor:hexA(CO.indigo,1),borderRadius:{topLeft:7,topRight:7},borderSkipped:false,barPercentage:0.6,categoryPercentage:0.7,
+        datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},formatter:function(v){return v;}}}
     ]},
-    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:Object.assign(noGrid(),{stacked:true}),y:Object.assign(axis(),{stacked:true})}}}));
+    options:{animation:{duration:800},
+      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
+      scales:{x:Object.assign(noGrid(),{stacked:true}),y:Object.assign(axis(),{stacked:true})}}}));
 },
 
 /* ---------- TARGET & GAP ---------- */
@@ -296,22 +380,31 @@ target:function(c){
   '</div>'+
 
   '<div class="chart-grid cols-2" style="margin-top:22px">'+
-    '<div class="chart-card"><div class="chart-insight-title">The inputs land 1.7 acquisitions below target</div><div class="chart-insight-stat">Acquisitions / week · target vs modeled</div><div class="chart-wrap"><canvas id="cGap" height="240"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">A 52% contact rate crosses the 6/week line</div><div class="chart-insight-stat">Acquisitions/week by contacted rate · dashed = target (at 3% conversion)</div><div class="chart-wrap"><canvas id="cSweep" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">The inputs land 1.7 acquisitions below target</div><div class="chart-insight-stat">Acquisitions / week · target vs modeled</div><div class="chart-wrap" style="height:300px"><canvas id="cGap" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">A 52% contact rate crosses the 6/week line</div><div class="chart-insight-stat">Acquisitions/week by contacted rate · dashed = target (at 3% conversion)</div><div class="chart-wrap" style="height:300px"><canvas id="cSweep" height="240"></canvas></div></div>'+
   '</div>'+
   '</div>';
 
   killCharts();
+  var gCol=[CO.emerald,CO.amber];
   charts.push(new Chart(document.getElementById('cGap'),{type:'bar',
-    data:{labels:['Target','Modeled (3%)'],datasets:[{data:[6,4.3],backgroundColor:[CO.emerald,CO.amber],borderRadius:8,barThickness:80}]},
-    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({min:0,max:6.5})}}}));
+    data:{labels:['Target','Modeled (3%)'],datasets:[{data:[6,4.3],
+      backgroundColor:function(ctx){return vGrad(ctx,gCol[ctx.dataIndex]);},
+      hoverBackgroundColor:function(ctx){return hexA(gCol[ctx.dataIndex],1);},
+      borderRadius:12,borderSkipped:false,barPercentage:0.5,categoryPercentage:0.6}]},
+    options:{layout:{padding:{top:26}},animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true,anchor:'end',align:'end',offset:3,color:function(ctx){return gCol[ctx.dataIndex];},font:{size:15,weight:'800'},formatter:function(v){return v.toFixed(1);}}},
+      scales:{x:noGrid(),y:axis({min:0,max:6.8,ticks:{color:CO.muted,font:{size:11},stepSize:2}})}}}));
   var rates=[0.37,0.42,0.47,0.517,0.57], acqs=rates.map(function(r){return +(387*r*0.03).toFixed(2);});
   charts.push(new Chart(document.getElementById('cSweep'),{type:'line',
     data:{labels:rates.map(function(r){return Math.round(r*100)+'%';}),datasets:[
-      {label:'Acquisitions / week',data:acqs,borderColor:CO.cyan,backgroundColor:'rgba(6,182,212,.12)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:CO.cyan},
-      {label:'Target (6)',data:rates.map(function(){return 6;}),borderColor:CO.emerald,borderDash:[6,5],pointRadius:0,fill:false}
+      {label:'Acquisitions / week',data:acqs,borderColor:CO.cyan,backgroundColor:function(ctx){return areaGrad(ctx,CO.cyan);},fill:true,borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:CO.cyan,pointBorderColor:'#0B1120',pointBorderWidth:2,
+        datalabels:{display:true,anchor:'end',align:'top',offset:8,color:CO.cyan,font:{size:11,weight:'700'},formatter:function(v){return v.toFixed(1);}}},
+      {label:'Target (6)',data:rates.map(function(){return 6;}),borderColor:CO.emerald,borderWidth:2,borderDash:[6,5],pointRadius:0,fill:false,datalabels:{display:false}}
     ]},
-    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:noGrid(),y:axis({min:4,max:7})}}}));
+    options:{layout:{padding:{top:26}},animation:{duration:800},interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
+      scales:{x:noGrid(),y:axis({min:4,max:7})}}}));
 }
 };
 
