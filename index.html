@@ -78,356 +78,951 @@
 </main>
 
 <script>
-/* ============================================================
-   PLAN MODEL — July 2026 (Longevity)
-   ============================================================ */
-var CO = { indigo:'#6366F1', cyan:'#06B6D4', amber:'#F59E0B', emerald:'#10B981', red:'#EF4444',
-  text:'#F1F5F9', sec:'#94A3B8', muted:'#64748B', grid:'rgba(148,163,184,.10)' };
+(function () {
+  "use strict";
 
-var PLAN = {
-  inputs:{ cpl:15, reps:3, acqTarget:6, price:1200, conv:0.03, contacted:0.37, callsPerLead:9, bioShare:0.30 },
-  weekly:{ spend:5800, leads:387, contacted:143, acqModel:4.3, acqTarget:6, calls:3480,
-    callsPerRep:200, revModel:5150, revTarget:7200, roasTarget:1.24, roasModel:0.89, cacTarget:967, bio:116, paid:271 },
-  monthly:{ spend:23200, leads:1547, contacted:572, acqModel:17.2, acqTarget:24, revTarget:28800, revModel:20602, bio:464, paid:1083 },
-  daily:[
-    { d:'Mon', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
-    { d:'Tue', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
-    { d:'Wed', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
-    { d:'Thu', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
-    { d:'Fri', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
-    { d:'Sat', spend:400,  leads:26.7, contacted:9.9,  calls:240, perRep:0,   wk:false },
-    { d:'Sun', spend:400,  leads:26.7, contacted:9.9,  calls:240, perRep:0,   wk:false }
-  ]
-};
+  // ── Register datalabels globally, opt-out by default ──
+  Chart.register(ChartDataLabels);
+  Chart.defaults.plugins.datalabels.display = false;
+  Chart.defaults.font.family = "Inter";
+  Chart.defaults.color = "#94A3B8";
 
-/* ============================================================
-   PREMIUM CHART SYSTEM — ported verbatim from CEO Performance Suite
-   ============================================================ */
-Chart.register(ChartDataLabels);
-Chart.defaults.font.family = "'Inter', sans-serif";
-Chart.defaults.font.size = 12;
-Chart.defaults.color = CO.sec;
-Chart.defaults.responsive = true;
-Chart.defaults.maintainAspectRatio = false;
-Chart.defaults.plugins.datalabels.display = false; /* opt-in per dataset */
-var charts = [];
-function killCharts(){ charts.forEach(function(c){ try{c.destroy();}catch(e){} }); charts = []; }
+  // ── Palette (verbatim from CEO Performance Suite) ──
+  const C = {
+    indigo: "#6366F1", indigoFade: "rgba(99,102,241,0.15)",
+    cyan: "#06B6D4", cyanFade: "rgba(6,182,212,0.15)",
+    amber: "#F59E0B", amberFade: "rgba(245,158,11,0.12)",
+    emerald: "#10B981", emeraldFade: "rgba(16,185,129,0.12)",
+    red: "#EF4444", redFade: "rgba(239,68,68,0.12)",
+    purple: "#A855F7",
+    text: "#F1F5F9", textSec: "#94A3B8", textMuted: "#64748B",
+    gridLine: "rgba(148,163,184,0.04)",
+  };
+  const barRadius = 4;
 
-/* ---- gradient fills (the premium signal on bars/areas) ---- */
-function hexA(hex,a){ var h=hex.replace('#',''); var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
-function vGrad(ctx,hex){ /* vertical bar gradient: bright top → deep base */
-  var a=ctx.chart.chartArea; if(!a) return hex;
-  var g=ctx.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);
-  g.addColorStop(0,hexA(hex,0.95)); g.addColorStop(1,hexA(hex,0.55)); return g; }
-function hGrad(ctx,hex){ /* horizontal bar gradient: deep left → bright right */
-  var a=ctx.chart.chartArea; if(!a) return hex;
-  var g=ctx.chart.ctx.createLinearGradient(a.left,0,a.right,0);
-  g.addColorStop(0,hexA(hex,0.6)); g.addColorStop(1,hexA(hex,0.95)); return g; }
-function areaGrad(ctx,hex){ /* line area fill */
-  var a=ctx.chart.chartArea; if(!a) return hexA(hex,0.12);
-  var g=ctx.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);
-  g.addColorStop(0,hexA(hex,0.28)); g.addColorStop(1,hexA(hex,0.01)); return g; }
+  // ── The analytical model (from july_analysis.json — no invented numbers) ──
+  const A = {
+    inputs: { cpl: 15, reps: 3, acqTarget: 6, price: 1200, conv: 0.03, contacted: 0.37,
+      callsPerLead: 9, bioShare: 0.3, wdSpend: 1000, sat: 400, sun: 400 },
+    weekly: { spend: 5800, leads: 387, contacted: 143, acqModel: 4.29, acqTarget: 6,
+      calls: 3480, callsPerRepWd: 200, revModel: 5150, revTarget: 7200,
+      roasModel: 0.888, roasTarget: 1.241, cacTarget: 967, cacModel: 1351,
+      profitModel: -650, profitTarget: 1400, bio: 116, paid: 271 },
+    analysis: {
+      gapAcq: 1.71, gapRevWk: 2050, gapRevMo: 8198, gapRevYr: 106579,
+      convNeeded: 4.2, contactedNeeded: 51.7, contactedLeadsNeeded: 200,
+      acqBreakeven: 4.83, convBreakeven: 3.4, valuePerContacted: 36.0,
+      valuePerLead: 13.32, valuePerDollar: 0.888, sustainableLow: 120,
+      sustainableHigh: 150, overloadPct: 33, callsPerRep5: 120,
+      bioValueWk: 1740, bioValueMo: 6960, bioAcqWk: 1.29,
+      convRange: [0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
+      contRange: [0.30, 0.37, 0.45, 0.52, 0.60],
+      sens: [
+        [2.32, 2.90, 3.48, 4.06, 4.64, 5.22, 5.80],
+        [2.86, 3.58, 4.29, 5.01, 5.72, 6.44, 7.15],
+        [3.48, 4.35, 5.22, 6.09, 6.96, 7.83, 8.70],
+        [4.02, 5.03, 6.03, 7.04, 8.04, 9.05, 10.05],
+        [4.64, 5.80, 6.96, 8.12, 9.28, 10.44, 11.60],
+      ],
+      acqCurve: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      profitCurve: [-5800, -4600, -3400, -2200, -1000, 200, 1400, 2600, 3800, 5000, 6200],
+    },
+  };
 
-/* ---- datalabel formatters ---- */
-function dlK(v){ if(v==null||v===0) return ''; v=+v;
-  if(Math.abs(v)>=1000000) return '$'+(v/1000000).toFixed(1).replace(/\.0$/,'')+'M';
-  if(Math.abs(v)>=1000) return '$'+(v/1000).toFixed(1).replace(/\.0$/,'')+'K';
-  return '$'+v; }
-function dlNum(v){ if(v==null||v==='') return ''; v=+v; return v>=100?Math.round(v):v.toFixed(1).replace(/\.0$/,''); }
-function dlX(v){ return v==null?'':(+v).toFixed(2)+'\u00d7'; }
-function dlPct(v){ return v==null?'':(+v).toFixed(0)+'%'; }
+  // ── Helpers ──
+  const $ = (s) => document.querySelector(s);
+  const container = $("#dashboardContainer");
+  const fmtDollar = (v) => (v < 0 ? "-$" : "$") + Math.abs(Math.round(v)).toLocaleString();
+  const fmtK = (v) => {
+    if (v === undefined || v === null) return "—";
+    if (Math.abs(v) >= 1e6) return (v < 0 ? "-$" : "$") + (Math.abs(v) / 1e6).toFixed(1) + "M";
+    if (Math.abs(v) >= 1e3) return (v < 0 ? "-$" : "$") + (Math.abs(v) / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+    return (v < 0 ? "-$" : "$") + Math.abs(Math.round(v));
+  };
+  const dlFmtK = (v) => {
+    if (v === undefined || v === null || v === 0) return "";
+    if (Math.abs(v) >= 1e3) return (v < 0 ? "-$" : "$") + (Math.abs(v) / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+    return (v < 0 ? "-$" : "$") + Math.abs(Math.round(v));
+  };
 
-/* ---- shared styled tooltip (dark glass) ---- */
-var TT = { enabled:true, mode:'index', intersect:false,
-  backgroundColor:'rgba(15,23,42,0.95)', titleColor:'#F1F5F9', bodyColor:'#94A3B8',
-  borderColor:'rgba(148,163,184,0.2)', borderWidth:1, padding:12, cornerRadius:10,
-  displayColors:true, boxPadding:4, titleFont:{size:12,weight:'600'}, bodyFont:{size:12} };
+  // ── Chart Management ──
+  let charts = [];
+  const killCharts = () => {
+    charts.forEach((c) => { try { c.destroy(); } catch (e) {} });
+    charts = [];
+  };
+  const mkChart = (id, cfg) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const c = new Chart(el.getContext("2d"), cfg);
+    charts.push(c);
+    return c;
+  };
 
-/* ---- refined axes ---- */
-function axis(opts){ return Object.assign({ grid:{ color:'rgba(148,163,184,0.05)', drawBorder:false }, border:{display:false}, ticks:{ color:CO.muted, font:{size:11} } }, opts||{}); }
-function noGrid(){ return { grid:{ display:false }, border:{display:false}, ticks:{ color:CO.muted, font:{size:11} } }; }
+  // ── Shared chart defaults (verbatim from reference) ──
+  const baseScaleX = {
+    ticks: { color: C.textMuted, font: { size: 9, family: "Inter" }, maxRotation: 45, autoSkip: true, autoSkipPadding: 8 },
+    grid: { display: false },
+  };
+  const baseScaleY = (title, fmt) => ({
+    beginAtZero: true,
+    title: { display: !!title, text: title || "", color: C.textMuted, font: { size: 10, family: "Inter" } },
+    ticks: { color: C.textMuted, font: { size: 9, family: "Inter" },
+      callback: fmt || function (v) { return v >= 1000 ? fmtK(v) : v; } },
+    grid: { color: C.gridLine },
+  });
+  const baseTooltip = {
+    mode: "index", intersect: false,
+    backgroundColor: "rgba(15,23,42,0.95)", titleColor: "#F1F5F9", bodyColor: "#94A3B8",
+    borderColor: "rgba(148,163,184,0.2)", borderWidth: 1,
+    titleFont: { size: 12, weight: "600", family: "Inter" },
+    bodyFont: { size: 11, family: "Inter" }, padding: 10, cornerRadius: 8,
+  };
+  const baseAnim = { duration: 800 };
 
-/* ---- datalabel presets ---- */
-function dlTop(color,fmt){ return { display:true, anchor:'end', align:'end', offset:2, clamp:true, color:color||CO.text, font:{size:11,weight:'700'}, formatter:fmt||dlNum }; }
-function dlEndH(color,fmt){ return { display:true, anchor:'end', align:'right', offset:4, clamp:true, color:color||CO.text, font:{size:11,weight:'700'}, formatter:fmt||dlNum }; }
-function dlPoint(color,fmt){ return { display:true, anchor:'end', align:'top', offset:6, color:color||CO.text, font:{size:10,weight:'700'}, formatter:fmt||dlNum }; }
+  // ── HTML builders ──
+  function headline(title, subtitle) {
+    return `<div class="strategic-headline">${title}</div>
+            <div class="strategic-subtitle">${subtitle || ""}</div>`;
+  }
+  function kpiRow(items) {
+    const n = items.length;
+    const cls = n <= 3 ? "cols-3" : n === 4 ? "cols-4" : n === 5 ? "cols-5" : "cols-6";
+    return `<div class="kpi-row ${cls}">${items.map((k) => `
+      <div class="kpi-card ${k.accent || ""}">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value">${k.value}</div>
+        ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ""}
+      </div>`).join("")}</div>`;
+  }
+  function chartCard(id, title, height) {
+    return `<div class="chart-card">
+      <div class="chart-card-title">${title}</div>
+      <div class="chart-wrap" style="height:${height || 360}px;"><canvas id="${id}"></canvas></div>
+    </div>`;
+  }
+  function dataTable(title, headers, rows) {
+    return `<div class="data-table-card">
+      <div class="chart-card-title">${title}</div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map((r) => `<tr>${r.map((c) => {
+            const isObj = c && typeof c === "object";
+            const cls = isObj && c.cls ? ` class="${c.cls}"` : "";
+            const style = isObj && c.style ? ` style="${c.style}"` : "";
+            const val = isObj ? c.v : c;
+            return `<td${cls}${style}>${val}</td>`;
+          }).join("")}</tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+  // Inline horizontal bar-fill gauge cell (Rockstar-style)
+  function gaugeCell(pct, color, label) {
+    const w = Math.max(0, Math.min(100, pct));
+    return `<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+      <span style="color:${color};font-weight:600;font-variant-numeric:tabular-nums;">${label}</span>
+      <div class="consistency-bar-wrap"><div class="consistency-bar" style="width:${w}%;background:${color};"></div></div>
+    </div>`;
+  }
+  function stdInsight(html) {
+    return `<div class="std-insight">${html}</div>`;
+  }
+  function verdict(label, html, amber) {
+    const style = amber ? ' style="border-left-color:#F59E0B;background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.18);"' : "";
+    const labelStyle = amber ? ' style="color:#F59E0B;"' : "";
+    return `<div class="verdict-banner"${style}>
+      <div class="verdict-label"${labelStyle}>${label}</div>
+      <div class="verdict-text">${html}</div>
+    </div>`;
+  }
 
-function kpi(label, value, sub, accent){
-  return '<div class="kpi-card'+(accent?' accent-'+accent:'')+'">'+
-    '<div class="kpi-label">'+label+'</div>'+
-    '<div class="kpi-value">'+value+'</div>'+
-    (sub?'<div class="kpi-label" style="margin-top:8px;text-transform:none;letter-spacing:0;color:var(--text-muted);font-weight:400">'+sub+'</div>':'')+
-  '</div>';
-}
+  // ── Custom per-chart plugin factory: threshold-zone shading + dashed annotated lines ──
+  // bands: [{axis:'y'|'x', from, to, color, label, labelColor}]
+  // lines: [{axis:'y'|'x', at, color, label, labelAlign}]
+  function makeAnnotPlugin(opts) {
+    return {
+      id: "annot_" + Math.random().toString(36).slice(2),
+      afterDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const { left, right, top, bottom } = chartArea;
+        ctx.save();
+        // Zone bands
+        (opts.bands || []).forEach((b) => {
+          const sc = scales[b.axis === "x" ? "x" : "y"];
+          if (!sc) return;
+          if (b.axis === "y") {
+            let p1 = sc.getPixelForValue(b.from);
+            let p2 = sc.getPixelForValue(b.to);
+            const yTop = Math.min(p1, p2), yBot = Math.max(p1, p2);
+            ctx.fillStyle = b.color;
+            ctx.fillRect(left, Math.max(yTop, top), right - left, Math.min(yBot, bottom) - Math.max(yTop, top));
+            if (b.label) {
+              ctx.fillStyle = b.labelColor || C.textMuted;
+              ctx.font = "700 9px Inter";
+              ctx.textAlign = "left";
+              ctx.textBaseline = "top";
+              ctx.fillText(b.label, left + 8, Math.max(yTop, top) + 5);
+            }
+          } else {
+            let p1 = sc.getPixelForValue(b.from);
+            let p2 = sc.getPixelForValue(b.to);
+            const xL = Math.min(p1, p2), xR = Math.max(p1, p2);
+            ctx.fillStyle = b.color;
+            ctx.fillRect(Math.max(xL, left), top, Math.min(xR, right) - Math.max(xL, left), bottom - top);
+            if (b.label) {
+              ctx.fillStyle = b.labelColor || C.textMuted;
+              ctx.font = "700 9px Inter";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "top";
+              ctx.fillText(b.label, (Math.max(xL, left) + Math.min(xR, right)) / 2, top + 5);
+            }
+          }
+        });
+        // Dashed target lines + label chips
+        (opts.lines || []).forEach((l) => {
+          const sc = scales[l.axis === "x" ? "x" : "y"];
+          if (!sc) return;
+          ctx.save();
+          ctx.strokeStyle = l.color;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 4]);
+          if (l.axis === "y") {
+            const y = sc.getPixelForValue(l.at);
+            ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+            if (l.label) drawChip(ctx, l.label, right - 8, y, "right", l.color);
+          } else {
+            const x = sc.getPixelForValue(l.at);
+            ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+            if (l.label) drawChip(ctx, l.label, x, top + 4, "center", l.color, true);
+          }
+          ctx.restore();
+        });
+        ctx.restore();
+      },
+    };
+  }
+  function drawChip(ctx, text, x, y, align, color, topAnchor) {
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.font = "700 9px Inter";
+    const padX = 6, padY = 3, h = 16;
+    const w = ctx.measureText(text).width + padX * 2;
+    let bx = x;
+    if (align === "right") bx = x - w;
+    else if (align === "center") bx = x - w / 2;
+    let by = topAnchor ? y : y - h / 2;
+    ctx.fillStyle = "rgba(15,23,42,0.92)";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, w, h, 4);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, bx + padX, by + h / 2 + 0.5);
+    ctx.restore();
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
 
-/* ============================================================
-   VIEWS
-   ============================================================ */
-var VIEWS = {
+  // ===========================================================================
+  // VIEW 1 — STRATEGIC OVERVIEW
+  // ===========================================================================
+  function renderOverview() {
+    const w = A.weekly, an = A.analysis;
+    container.innerHTML = `<div class="dashboard-view">
+      ${headline("July Plan — Is the Machine Profitable?",
+        "3 reps · $5,800/wk ad spend · $106,579/yr in acquisitions at stake. The plan as modeled runs a weekly loss until the gap to 6 acquisitions closes.")}
 
-/* ---------- OVERVIEW ---------- */
-overview:function(c){
-  c.innerHTML =
-  '<div class="dashboard-view">'+
-  '<div class="strategic-headline">July Plan — Strategic Overview</div>'+
-  '<div class="strategic-subtitle">3-rep team · $15 cost per lead · $1,200 per acquisition · target 6 acquisitions / week. Model built strictly from your inputs.</div>'+
+      <div class="overview-columns">
+        <div>
+          <div class="overview-col-header green"><span class="header-dot"></span>What the plan produces</div>
+          <div class="overview-box">
+            <div class="overview-box-title">$5,800/wk → 387 leads</div>
+            <div class="overview-box-desc">At a $15 CPL across weekdays + weekend, the plan buys 387 leads a week (271 paid + 116 from the bio link).</div>
+          </div>
+          <div class="overview-box">
+            <div class="overview-box-title">387 leads → 143 contacted</div>
+            <div class="overview-box-desc">At a 37% contact rate the team reaches 143 leads/wk — this is the true top of the sales funnel.</div>
+          </div>
+          <div class="overview-box">
+            <div class="overview-box-title">143 contacted → 4.3 acquisitions</div>
+            <div class="overview-box-desc">At a 3% conversion the modeled output is 4.29 acquisitions/wk, generating $5,150 of revenue at the $1,200 price.</div>
+          </div>
+        </div>
+        <div>
+          <div class="overview-col-header amber"><span class="header-dot"></span>Where value leaks</div>
+          <div class="overview-box">
+            <div class="overview-box-title" style="color:#EF4444;">Underwater −$650/wk</div>
+            <div class="overview-box-desc">$5,150 revenue vs $5,800 spend = a 0.89× ROAS. The week loses money until acquisitions clear the 4.83 break-even.</div>
+          </div>
+          <div class="overview-box">
+            <div class="overview-box-title" style="color:#F59E0B;">200 calls/rep/day — 33% over ceiling</div>
+            <div class="overview-box-desc">3,480 calls/wk across 3 reps = 200/rep/weekday, a third above the ~150 sustainable ceiling.</div>
+          </div>
+          <div class="overview-box">
+            <div class="overview-box-title" style="color:#F59E0B;">The gap is worth $2,050/wk</div>
+            <div class="overview-box-desc">Closing 4.3 → 6 acquisitions (+1.71/wk) adds $2,050 every week — $106,579 a year of foregone acquisitions.</div>
+          </div>
+        </div>
+      </div>
 
-  '<div class="overview-columns">'+
-    '<div><div class="overview-col-header green"><span class="header-dot"></span>THE WEEKLY MACHINE</div>'+
-      '<div class="overview-box"><div class="overview-box-title">$5,800 spend → 387 leads</div><div class="overview-box-desc">$1,000/day Mon–Fri + $400 Sat + $400 Sun, all at $15 per lead.</div></div>'+
-      '<div class="overview-box"><div class="overview-box-title">387 leads → 143 contacted</div><div class="overview-box-desc">At a 37% contacted rate, 143 leads reach a live conversation each week.</div></div>'+
-      '<div class="overview-box"><div class="overview-box-title">143 contacted → 4.3 acquisitions</div><div class="overview-box-desc">At 3% conversion the inputs deliver 4.3/wk — 1.7 short of the 6 target.</div></div>'+
-    '</div>'+
-    '<div><div class="overview-col-header amber"><span class="header-dot"></span>THE OPERATING RHYTHM</div>'+
-      '<div class="overview-box"><div class="overview-box-title">9 calls per lead, every day</div><div class="overview-box-desc">3,480 calls/week — 600 per weekday split across 3 reps (200 each).</div></div>'+
-      '<div class="overview-box"><div class="overview-box-title">Weekends captured, not lost</div><div class="overview-box-desc">Sat + Sun spend keeps producing leads; they are worked at the start of the following week.</div></div>'+
-      '<div class="overview-box"><div class="overview-box-title">30% direct website bio leads</div><div class="overview-box-desc">116 of 387 weekly leads come straight from the bio link — the rest are paid.</div></div>'+
-    '</div>'+
-  '</div>'+
+      <div class="chart-grid cols-2">
+        ${chartCard("ovProfit", "Break-even is 4.83 acquisitions; the model lands below it.", 360)}
+        ${chartCard("ovWaterfall", "Closing the gap adds $2,050 every week.", 360)}
+      </div>
 
-  '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">The plan clears 6/week only above 143 contacted leads</div><div class="chart-insight-stat">Weekly funnel · leads → contacted (37%) → acquisitions</div><div class="chart-wrap" style="height:300px"><canvas id="cFunnel" height="230"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">At target, weekly revenue outruns spend 1.24×</div><div class="chart-insight-stat">$7,200 revenue @ 6 acq vs $5,800 spend · model lands at $5,150</div><div class="chart-wrap" style="height:300px"><canvas id="cRevSpend" height="230"></canvas></div></div>'+
-  '</div>'+
+      <div class="overview-impact-banner">
+        <div class="overview-impact-label">Annual Value at Stake</div>
+        <div class="overview-impact-value">$106,579</div>
+        <div class="overview-impact-sub">1.71 acq/wk × $1,200 × 52 weeks · the plan is −$650/wk until the gap closes.</div>
+      </div>
+    </div>`;
 
-  '<div class="overview-impact-banner">'+
-    '<div class="overview-impact-label">Monthly Revenue at Target (4 weeks)</div>'+
-    '<div class="overview-impact-value">$28,800</div>'+
-    '<div class="overview-impact-sub">$23,200 spend · 1,547 leads · 572 contacted · 24 acquisitions @ $1,200 · CAC $967</div>'+
-  '</div>'+
-  '</div>';
+    killCharts();
 
-  killCharts();
-  var fCol=[CO.cyan,CO.indigo,CO.emerald];
-  charts.push(new Chart(document.getElementById('cFunnel'),{type:'bar',
-    data:{labels:['Leads','Contacted (37%)','Acquisitions'],datasets:[{data:[387,143,6],
-      backgroundColor:function(ctx){return hGrad(ctx,fCol[ctx.dataIndex]||CO.indigo);},
-      hoverBackgroundColor:function(ctx){return hexA(fCol[ctx.dataIndex]||CO.indigo,1);},
-      borderRadius:8,borderSkipped:false,barPercentage:0.62,categoryPercentage:0.72}]},
-    options:{indexAxis:'y',layout:{padding:{left:6,right:34}},animation:{duration:800},
-      plugins:{legend:{display:false},tooltip:TT,datalabels:dlEndH(CO.text,dlNum)},
-      scales:{x:axis({grid:{display:false}}),y:Object.assign(noGrid(),{ticks:{color:CO.text,font:{size:12,weight:'600'},crossAlign:'far',padding:6}})}}}));
-  var rCol=[CO.indigo,CO.emerald,CO.amber];
-  charts.push(new Chart(document.getElementById('cRevSpend'),{type:'bar',
-    data:{labels:['Spend','Revenue @ target','Revenue @ model'],datasets:[{data:[5800,7200,5150],
-      backgroundColor:function(ctx){return vGrad(ctx,rCol[ctx.dataIndex]||CO.indigo);},
-      hoverBackgroundColor:function(ctx){return hexA(rCol[ctx.dataIndex]||CO.indigo,1);},
-      borderRadius:10,borderSkipped:false,barPercentage:0.55,categoryPercentage:0.7}]},
-    options:{layout:{padding:{top:26}},animation:{duration:800},
-      plugins:{legend:{display:false},tooltip:TT,datalabels:dlTop(CO.text,dlK)},
-      scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+(v/1000)+'k';}}})}}}));
-},
+    // Chart A: profit curve across 0–10 acquisitions
+    const pointColors = an.acqCurve.map((a) => (a >= an.acqBreakeven ? C.emerald : C.red));
+    mkChart("ovProfit", {
+      type: "line",
+      data: {
+        labels: an.acqCurve.map((a) => a + " acq"),
+        datasets: [{
+          label: "Weekly profit",
+          data: an.profitCurve,
+          borderColor: C.indigo,
+          backgroundColor: "rgba(99,102,241,0.08)",
+          fill: true,
+          tension: 0.15,
+          pointRadius: an.acqCurve.map((a) => (a === 4 || a === 6 ? 7 : 4)),
+          pointHoverRadius: 9,
+          pointBackgroundColor: pointColors,
+          pointBorderColor: pointColors,
+          datalabels: {
+            display: (ctx) => ctx.dataIndex === 4 || ctx.dataIndex === 6,
+            color: (ctx) => (ctx.dataIndex === 6 ? C.emerald : C.amber),
+            font: { size: 9, weight: "700", family: "Inter" },
+            align: "top", offset: 6,
+            formatter: (v, ctx) => (ctx.dataIndex === 4 ? "Model 4.3 · " : "Target 6 · ") + dlFmtK(v),
+          },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => "Weekly profit: " + fmtDollar(ctx.parsed.y),
+            afterBody: (items) => {
+              const a = items[0].dataIndex;
+              return ["  Revenue: " + fmtDollar(a * 1200), "  Spend: $5,800",
+                a >= an.acqBreakeven ? "  ✓ Above break-even (4.83)" : "  ✗ Below break-even (4.83)"];
+            },
+          } },
+        },
+        scales: {
+          x: { ...baseScaleX, title: { display: true, text: "Acquisitions / week", color: C.textMuted, font: { size: 10 } } },
+          y: { ...baseScaleY("Weekly profit ($)"), beginAtZero: false },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        bands: [{ axis: "y", from: -6200, to: 0, color: "rgba(239,68,68,0.06)", label: "LOSS ZONE", labelColor: C.red }],
+        lines: [
+          { axis: "y", at: 0, color: C.textSec, label: "Break-even $0" },
+          { axis: "x", at: 5, color: C.emerald, label: "4.83 break-even acq", labelAlign: "center" },
+        ],
+      }) ],
+    });
 
-/* ---------- ECONOMICS ---------- */
-economics:function(c){
-  c.innerHTML =
-  '<div class="dashboard-view">'+
-  '<div class="strategic-headline">Weekly Economics — Unit Costs &amp; Return</div>'+
-  '<div class="strategic-subtitle">What every dollar of ad spend produces at $15/lead · 37% contacted · 3% conversion.</div>'+
+    // Chart B: waterfall spend → rev@model → gap → rev@target
+    mkChart("ovWaterfall", {
+      type: "bar",
+      data: {
+        labels: ["Spend", "Rev @ 4.3", "Gap to 6", "Rev @ 6"],
+        datasets: [{
+          label: "Weekly $",
+          data: [w.spend, w.revModel, an.gapRevWk, w.revTarget],
+          backgroundColor: [C.redFade, "rgba(245,158,11,0.4)", "rgba(99,102,241,0.4)", "rgba(16,185,129,0.5)"],
+          borderColor: [C.red, C.amber, C.indigo, C.emerald],
+          borderWidth: 1.5,
+          borderRadius: barRadius,
+          datalabels: {
+            display: true, anchor: "end", align: "top",
+            color: [C.red, C.amber, C.indigo, C.emerald],
+            font: { size: 9, weight: "700", family: "Inter" },
+            formatter: (v) => dlFmtK(v),
+          },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => ctx.label + ": " + fmtDollar(ctx.parsed.y),
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              if (i === 0) return ["  Ad spend, all-in"];
+              if (i === 1) return ["  4.29 acq × $1,200 → ROAS 0.89×"];
+              if (i === 2) return ["  +1.71 acq × $1,200 = $2,050/wk"];
+              return ["  6.0 acq × $1,200 → ROAS 1.24×"];
+            },
+          } },
+        },
+        scales: { x: baseScaleX, y: baseScaleY("Weekly $") },
+      },
+      plugins: [ makeAnnotPlugin({
+        lines: [{ axis: "y", at: w.spend, color: C.red, label: "$5,800 spend line" }],
+      }) ],
+    });
+  }
 
-  '<div class="kpi-row cols-4">'+
-    kpi('SPEND / WEEK','$5,800','$23,200 per month')+
-    kpi('REVENUE @ TARGET','$7,200','6 acquisitions × $1,200','green')+
-    kpi('ROAS @ TARGET','1.24×','revenue ÷ spend','green')+
-    kpi('CAC @ TARGET','$967','$5,800 ÷ 6 acquisitions','amber')+
-  '</div>'+
+  // ===========================================================================
+  // VIEW 2 — WEEKLY ECONOMICS
+  // ===========================================================================
+  function renderEconomics() {
+    const w = A.weekly, an = A.analysis;
+    const acqRange = [3, 4, 5, 6, 7, 8];
+    const profitByAcq = acqRange.map((a) => a * 1200 - w.spend);
 
-  '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">$15 a lead compounds to $967 an acquisition</div><div class="chart-insight-stat">Cost climbs at each stage of the funnel (log scale)</div><div class="chart-wrap" style="height:300px"><canvas id="cCostChain" height="250"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">Break-even sits between 5 and 6 acquisitions</div><div class="chart-insight-stat">Weekly profit = revenue − $5,800 spend</div><div class="chart-wrap" style="height:300px"><canvas id="cProfit" height="250"></canvas></div></div>'+
-  '</div>'+
+    container.innerHTML = `<div class="dashboard-view">
+      ${headline("Weekly Economics — The Unit Math Doesn't Clear",
+        "At the modeled 4.3 acquisitions the week runs a $650 loss and CAC exceeds the sale price. Profit only appears at 5+ acquisitions.")}
+      ${kpiRow([
+        { label: "Spend / week", value: "$5,800", sub: "$23.2K / month" },
+        { label: "ROAS @ model", value: "0.89×", accent: "accent-red", sub: "underwater" },
+        { label: "ROAS @ target", value: "1.24×", accent: "accent-green", sub: "6 acq/wk" },
+        { label: "CAC @ model", value: "$1,351", accent: "accent-red", sub: "above $1,200 price" },
+        { label: "Break-even", value: "4.83", sub: "acquisitions / wk" },
+      ])}
+      <div class="chart-grid cols-2">
+        ${chartCard("ecCostChain", "At 4.3 acq the CAC ($1,351) exceeds the $1,200 sale price.", 360)}
+        ${chartCard("ecProfit", "The week only turns profitable at 5+ acquisitions.", 360)}
+      </div>
+      ${dataTable("Unit Economics — Per Week / Month / Year",
+        ["Metric", "Per Week", "Per Month", "Per Year"],
+        [
+          ["Ad spend", "$5,800", "$23,200", "$301,600"],
+          ["Leads", "387", "1,548", "20,124"],
+          ["Contacted", "143", "572", "7,436"],
+          ["Acquisitions (model)", "4.29", "17.2", "223"],
+          ["Acquisitions (target)", "6.00", "24.0", "312"],
+          ["Revenue (model)", "$5,150", "$20,600", "$267,800"],
+          ["ROAS (model)", { v: "0.89×", cls: "", style: "color:#EF4444;font-weight:600;" }, "0.89×", "0.89×"],
+          ["CAC (model)", { v: "$1,351", style: "color:#EF4444;font-weight:600;" }, "$1,351", "$1,351"],
+          ["CAC (target)", { v: "$967", style: "color:#10B981;font-weight:600;" }, "$967", "$967"],
+          ["Profit (model)", { v: "−$650", style: "color:#EF4444;font-weight:700;" }, { v: "−$2,600", style: "color:#EF4444;font-weight:700;" }, { v: "−$33,800", style: "color:#EF4444;font-weight:700;" }],
+          ["Profit (target)", { v: "+$1,400", style: "color:#10B981;font-weight:700;" }, { v: "+$5,600", style: "color:#10B981;font-weight:700;" }, { v: "+$72,800", style: "color:#10B981;font-weight:700;" }],
+        ])}
+      ${verdict("Verdict — Underwater at Model",
+        "The plan is modeled at a weekly <b style='color:#EF4444'>loss of $650</b>. Break-even needs <b>4.83 acquisitions</b> (≈3.4% conversion at today's contact rate); the modeled 4.3 falls just short. Hitting the <b>6-acquisition target yields +$1,400/wk</b> in profit — a $2,050/wk swing from where the plan sits today.",
+        true)}
+    </div>`;
 
-  '<div class="data-table-card"><div class="chart-card-title">Economics detail — per week &amp; per month</div>'+
-    '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Metric</th><th>Per week</th><th>Per month (×4)</th></tr></thead><tbody>'+
-    '<tr><td>Ad spend</td><td>$5,800</td><td>$23,200</td></tr>'+
-    '<tr><td>Leads (@ $15)</td><td>387</td><td>1,547</td></tr>'+
-    '<tr><td>Contacted (37%)</td><td>143</td><td>572</td></tr>'+
-    '<tr><td>Acquisitions (target)</td><td>6</td><td>24</td></tr>'+
-    '<tr><td>Acquisitions (model, 3%)</td><td>4.3</td><td>17.2</td></tr>'+
-    '<tr><td>Revenue @ target</td><td>$7,200</td><td>$28,800</td></tr>'+
-    '<tr><td>ROAS @ target</td><td>1.24×</td><td>1.24×</td></tr>'+
-    '<tr><td>CAC @ target</td><td>$967</td><td>$967</td></tr>'+
-    '<tr><td>Calls (9 / lead)</td><td>3,480</td><td>13,920</td></tr>'+
-    '</tbody></table></div></div>'+
+    killCharts();
 
-  '<div class="std-insight">At $15/lead, the funnel converts spend into acquisitions at roughly <b style="color:#fff">$967 each</b> when you hit the 6/week target — comfortably under the $1,200 sale price, leaving a <b style="color:#fff">1.24× ROAS</b>. At the modeled 4.3/week, weekly revenue ($5,150) falls just below spend, so closing the gap to 6 is what turns the week profitable.</div>'+
-  '</div>';
+    // Chart A: cost-chain log bar CPL → cost/contacted → CAC, with $1,200 price line
+    mkChart("ecCostChain", {
+      type: "bar",
+      data: {
+        labels: ["Cost / lead", "Cost / contacted", "CAC @ 4.3 acq"],
+        datasets: [{
+          label: "Cost ($, log scale)",
+          data: [15, 41, w.cacModel],
+          backgroundColor: ["rgba(6,182,212,0.4)", "rgba(245,158,11,0.4)", "rgba(239,68,68,0.45)"],
+          borderColor: [C.cyan, C.amber, C.red],
+          borderWidth: 1.5, borderRadius: barRadius,
+          datalabels: {
+            display: true, anchor: "end", align: "top",
+            color: [C.cyan, C.amber, C.red],
+            font: { size: 10, weight: "700", family: "Inter" },
+            formatter: (v) => "$" + v.toLocaleString(),
+          },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => ctx.label + ": $" + ctx.parsed.y.toLocaleString(),
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              if (i === 0) return ["  $5,800 spend ÷ 387 leads"];
+              if (i === 1) return ["  $5,800 ÷ 143 contacted"];
+              return ["  $5,800 ÷ 4.29 acq — exceeds the $1,200 price by $151"];
+            },
+          } },
+        },
+        scales: {
+          x: baseScaleX,
+          y: { type: "logarithmic", title: { display: true, text: "Cost ($, log)", color: C.textMuted, font: { size: 10 } },
+            ticks: { color: C.textMuted, font: { size: 9 }, callback: (v) => ([10, 100, 1000].includes(v) ? "$" + v : null) },
+            grid: { color: C.gridLine } },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        lines: [{ axis: "y", at: 1200, color: C.emerald, label: "$1,200 sale price" }],
+      }) ],
+    });
 
-  killCharts();
-  var ccCol=[CO.cyan,CO.indigo,CO.amber];
-  charts.push(new Chart(document.getElementById('cCostChain'),{type:'bar',
-    data:{labels:['Cost / lead','Cost / contacted','Cost / acquisition'],datasets:[{data:[15,41,967],
-      backgroundColor:function(ctx){return vGrad(ctx,ccCol[ctx.dataIndex]||CO.indigo);},
-      hoverBackgroundColor:function(ctx){return hexA(ccCol[ctx.dataIndex]||CO.indigo,1);},
-      borderRadius:10,borderSkipped:false,barPercentage:0.55,categoryPercentage:0.7}]},
-    options:{layout:{padding:{top:26}},animation:{duration:800},
-      plugins:{legend:{display:false},tooltip:TT,datalabels:dlTop(CO.text,function(v){return '$'+(+v).toLocaleString();})},
-      scales:{x:noGrid(),y:Object.assign(axis(),{type:'logarithmic',ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+v;}}})}}}));
-  var acqx=[3,4,5,6,7,8], profit=acqx.map(function(a){return a*1200-5800;});
-  charts.push(new Chart(document.getElementById('cProfit'),{type:'bar',
-    data:{labels:acqx.map(function(a){return a+' acq';}),datasets:[{data:profit,
-      backgroundColor:function(ctx){return vGrad(ctx,profit[ctx.dataIndex]>=0?CO.emerald:CO.red);},
-      hoverBackgroundColor:function(ctx){return hexA(profit[ctx.dataIndex]>=0?CO.emerald:CO.red,1);},
-      borderRadius:8,borderSkipped:false,barPercentage:0.6,categoryPercentage:0.72}]},
-    options:{layout:{padding:{top:22,bottom:14}},animation:{duration:800},
-      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true,anchor:function(ctx){return profit[ctx.dataIndex]>=0?'end':'start';},align:function(ctx){return profit[ctx.dataIndex]>=0?'end':'start';},offset:3,color:function(ctx){return profit[ctx.dataIndex]>=0?CO.emerald:CO.red;},font:{size:11,weight:'700'},formatter:function(v){return (v>=0?'+$':'\u2212$')+Math.abs(v/1000).toFixed(1)+'k';}}},
-      scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,font:{size:11},callback:function(v){return '$'+(v/1000).toFixed(1)+'k';}}})}}}));
-},
+    // Chart B: diverging profit bars 3–8 acq with break-even line
+    mkChart("ecProfit", {
+      type: "bar",
+      data: {
+        labels: acqRange.map((a) => a + " acq"),
+        datasets: [{
+          label: "Weekly profit",
+          data: profitByAcq,
+          backgroundColor: profitByAcq.map((p) => (p >= 0 ? "rgba(16,185,129,0.5)" : "rgba(239,68,68,0.45)")),
+          borderColor: profitByAcq.map((p) => (p >= 0 ? C.emerald : C.red)),
+          borderWidth: 1.5, borderRadius: barRadius,
+          datalabels: {
+            display: true, anchor: (ctx) => (ctx.dataset.data[ctx.dataIndex] >= 0 ? "end" : "start"),
+            align: (ctx) => (ctx.dataset.data[ctx.dataIndex] >= 0 ? "top" : "bottom"),
+            color: profitByAcq.map((p) => (p >= 0 ? C.emerald : C.red)),
+            font: { size: 9, weight: "700", family: "Inter" },
+            formatter: (v) => dlFmtK(v),
+          },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => "Profit: " + fmtDollar(ctx.parsed.y),
+            afterBody: (items) => ["  Revenue: " + fmtDollar(acqRange[items[0].dataIndex] * 1200), "  ROAS: " + (acqRange[items[0].dataIndex] * 1200 / 5800).toFixed(2) + "×"],
+          } },
+        },
+        scales: {
+          x: { ...baseScaleX, title: { display: true, text: "Acquisitions / week", color: C.textMuted, font: { size: 10 } } },
+          y: { ...baseScaleY("Weekly profit ($)"), beginAtZero: false },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        lines: [{ axis: "y", at: 0, color: C.textSec, label: "Break-even" }],
+      }) ],
+    });
+  }
 
-/* ---------- CADENCE ---------- */
-cadence:function(c){
-  c.innerHTML =
-  '<div class="dashboard-view">'+
-  '<div class="strategic-headline">Daily Cadence — Leads &amp; Call Load</div>'+
-  '<div class="strategic-subtitle">9 calls per lead, every day · 3 reps working weekdays only · weekend leads worked at the start of the following week.</div>'+
+  // ===========================================================================
+  // VIEW 3 — DAILY CADENCE & REP LOAD
+  // ===========================================================================
+  function renderCadence() {
+    const an = A.analysis;
+    // Daily plan: weekdays $1,000 spend → ~67 leads/day; weekend $400 → ~27/day
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const dayLeads = [67, 67, 67, 67, 67, 27, 27];   // $1000/15 ≈ 67 wd; $400/15 ≈ 27 we
+    const dayCalls = [600, 600, 600, 600, 600, 0, 0]; // 3480/wk ≈ 600/weekday across 3 reps
+    const isWeekend = [false, false, false, false, false, true, true];
 
-  '<div class="kpi-row cols-4">'+
-    kpi('LEADS / WEEKDAY','67','$1,000 spend ÷ $15')+
-    kpi('CALLS / WEEKDAY','600','67 leads × 9 calls')+
-    kpi('CALLS / REP / DAY','200','600 calls ÷ 3 reps','amber')+
-    kpi('WEEKEND LEADS','53','Sat + Sun · worked Monday','green')+
-  '</div>'+
+    container.innerHTML = `<div class="dashboard-view">
+      ${headline("Daily Cadence — Rep Capacity Is the #1 Execution Risk",
+        "The spend schedule is fine; the calling load is not. Cutting from 5 reps to 3 pushed each rep to 200 calls/day — a third above what a team can sustain.")}
+      ${kpiRow([
+        { label: "Calls / weekday", value: "600", sub: "3,480 / week" },
+        { label: "Calls / rep / day", value: "200", accent: "accent-red", sub: "3-rep team" },
+        { label: "Sustainable ceiling", value: "~150", sub: "per rep / day" },
+        { label: "Overload", value: "+33%", accent: "accent-red", sub: "above ceiling" },
+        { label: "With 5 reps", value: "120", accent: "accent-green", sub: "safe / rep" },
+      ])}
+      <div class="chart-grid cols-2">
+        ${chartCard("cadDaily", "Weekday load runs 33% above the safe calling ceiling.", 360)}
+        ${chartCard("cadReps", "Cutting from 5 reps to 3 pushed each rep 33% past the ceiling.", 360)}
+      </div>
+      ${dataTable("Daily Plan — Spend, Leads, Calls & Load vs Ceiling",
+        ["Day", "Spend", "Leads", "Calls (team)", "Calls / rep", "Load vs Ceiling"],
+        days.map((d, i) => [
+          d,
+          isWeekend[i] ? "$400" : "$1,000",
+          String(dayLeads[i]),
+          isWeekend[i] ? "0" : "600",
+          isWeekend[i] ? { v: "0", style: "color:#64748B;" } : { v: "200", style: "color:#EF4444;font-weight:600;" },
+          { v: isWeekend[i] ? "—" : gaugeCell(200 / 150 * 100 > 100 ? 100 : 200 / 150 * 100, C.red, "133%"), style: "text-align:right;" },
+        ])
+        .concat([[
+          { v: "Week", style: "font-weight:700;" },
+          "$5,800", "387", "3,480",
+          { v: "200 avg", style: "color:#EF4444;font-weight:700;" },
+          { v: gaugeCell(100, C.red, "+33%"), style: "text-align:right;" },
+        ]])
+      )}
+      ${verdict("Verdict — Staffing Risk",
+        "<b>200 calls/rep/day for a 3-person team is the single biggest execution risk in this plan</b> — 33% above the ~150 sustainable ceiling, where connect quality and rep retention degrade. Weekend leads (~53/wk) are not lost: they <b>bank for Monday</b>, but that concentrates load at the start of the week. Restoring a <b>5th rep drops load to 120/rep/day</b>, comfortably inside the safe band.",
+        true)}
+    </div>`;
 
-  '<div class="chart-card"><div class="chart-insight-title">Weekday call load holds at 600/day; weekend leads bank for Monday</div><div class="chart-insight-stat">Leads (bars) vs calls (line) by day of week — grey bars are weekend leads, not lost</div><div class="chart-wrap" style="height:300px"><canvas id="cDaily"></canvas></div></div>'+
+    killCharts();
 
-  '<div class="data-table-card"><div class="chart-card-title">Daily plan</div>'+
-    '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Day</th><th>Spend</th><th>Leads</th><th>Contacted (37%)</th><th>Calls (9/lead)</th><th>Calls / Rep</th></tr></thead><tbody>'+
-    PLAN.daily.map(function(x){return '<tr><td>'+x.d+(x.wk?'':' *')+'</td><td>$'+x.spend.toLocaleString()+'</td><td>'+x.leads.toFixed(1)+'</td><td>'+x.contacted.toFixed(1)+'</td><td>'+x.calls+'</td><td>'+(x.perRep?x.perRep:'—')+'</td></tr>';}).join('')+
-    '<tr style="font-weight:700"><td>Week</td><td>$5,800</td><td>387</td><td>143</td><td>3,480</td><td>200 / day</td></tr>'+
-    '</tbody></table></div></div>'+
+    // Chart A: dual-axis leads(bars) + calls/rep(line) by day, with 150 ceiling line on calls axis
+    mkChart("cadDaily", {
+      type: "bar",
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: "Leads (bars)",
+            data: dayLeads,
+            backgroundColor: isWeekend.map((we) => (we ? "rgba(148,163,184,0.25)" : "rgba(99,102,241,0.4)")),
+            borderColor: isWeekend.map((we) => (we ? C.textMuted : C.indigo)),
+            borderWidth: 1, borderRadius: barRadius, yAxisID: "yLeads", order: 2,
+            datalabels: { display: true, anchor: "end", align: "top", color: C.textSec,
+              font: { size: 9, weight: "700", family: "Inter" }, formatter: (v) => v },
+          },
+          {
+            label: "Calls / rep (line)",
+            data: dayCalls.map((c) => (c ? c / 3 : null)),
+            type: "line", borderColor: C.amber, backgroundColor: C.amber,
+            pointRadius: 4, pointHoverRadius: 7, tension: 0.2, spanGaps: false,
+            yAxisID: "yCalls", order: 1,
+            datalabels: { display: (ctx) => ctx.dataset.data[ctx.dataIndex] != null,
+              anchor: "end", align: "bottom", color: C.amber,
+              font: { size: 9, weight: "700", family: "Inter" }, formatter: (v) => (v ? Math.round(v) : "") },
+          },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { color: C.textSec, font: { size: 10, family: "Inter" }, boxWidth: 12, padding: 12 } },
+          tooltip: { ...baseTooltip, callbacks: {
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              if (isWeekend[i]) return ["  Weekend: no calling — leads bank for Monday"];
+              return ["  200 calls/rep = 33% over the 150 ceiling"];
+            },
+          } },
+        },
+        scales: {
+          x: baseScaleX,
+          yLeads: { ...baseScaleY("Leads / day"), position: "left", ticks: { color: C.textMuted, font: { size: 9 }, callback: (v) => v } },
+          yCalls: { position: "right", beginAtZero: true, max: 220,
+            title: { display: true, text: "Calls / rep / day", color: C.amber, font: { size: 10 } },
+            ticks: { color: C.textMuted, font: { size: 9 } }, grid: { display: false } },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        lines: [{ axis: "yCalls", at: 150, color: C.emerald, label: "150 safe ceiling" }],
+      }) ],
+    });
 
-  '<div class="std-insight">* Saturday and Sunday spend keeps generating leads (≈53/weekend), but the 3 reps do not call on weekends — those leads are worked first thing Monday, so they are <b style="color:#fff">banked, not lost</b>. Note the weekday load: 200 calls per rep per day is aggressive for a 3-person team and is the main operational risk in this plan.</div>'+
-  '</div>';
+    // Chart B: calls/rep/day comparison — 3 reps (200) vs 5 reps (120) vs ceiling (150)
+    mkChart("cadReps", {
+      type: "bar",
+      data: {
+        labels: ["3 reps (today)", "5 reps", "Sustainable ceiling"],
+        datasets: [{
+          label: "Calls / rep / day",
+          data: [200, 120, 150],
+          backgroundColor: ["rgba(239,68,68,0.5)", "rgba(16,185,129,0.5)", "rgba(148,163,184,0.25)"],
+          borderColor: [C.red, C.emerald, C.textMuted],
+          borderWidth: 1.5, borderRadius: barRadius,
+          datalabels: { display: true, anchor: "end", align: "top",
+            color: [C.red, C.emerald, C.textSec],
+            font: { size: 11, weight: "700", family: "Inter" }, formatter: (v) => v },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => ctx.label + ": " + ctx.parsed.y + " calls/rep/day",
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              if (i === 0) return ["  +33% above the ceiling"];
+              if (i === 1) return ["  −20% below the ceiling — safe"];
+              return ["  Above this, quality & retention degrade"];
+            },
+          } },
+        },
+        scales: { x: baseScaleX, y: { ...baseScaleY("Calls / rep / day"), ticks: { color: C.textMuted, font: { size: 9 }, callback: (v) => v }, max: 230 } },
+      },
+      plugins: [ makeAnnotPlugin({
+        lines: [{ axis: "y", at: 150, color: C.emerald, label: "150 ceiling" }],
+      }) ],
+    });
+  }
 
-  killCharts();
-  charts.push(new Chart(document.getElementById('cDaily'),{type:'bar',
-    data:{labels:PLAN.daily.map(function(x){return x.d;}),datasets:[
-      {type:'bar',label:'Leads',data:PLAN.daily.map(function(x){return x.leads;}),
-        backgroundColor:function(ctx){return vGrad(ctx,PLAN.daily[ctx.dataIndex].wk?CO.cyan:'#64748B');},
-        hoverBackgroundColor:function(ctx){return hexA(PLAN.daily[ctx.dataIndex].wk?CO.cyan:'#94A3B8',1);},
-        borderRadius:7,borderSkipped:false,barPercentage:0.62,categoryPercentage:0.72,yAxisID:'y',order:2,
-        datalabels:{display:true,anchor:'end',align:'end',offset:2,color:function(ctx){return PLAN.daily[ctx.dataIndex].wk?CO.cyan:CO.muted;},font:{size:10,weight:'700'},formatter:function(v){return Math.round(v);}}},
-      {type:'line',label:'Calls',data:PLAN.daily.map(function(x){return x.calls;}),
-        borderColor:CO.indigo,backgroundColor:function(ctx){return areaGrad(ctx,CO.indigo);},fill:true,
-        borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:CO.indigo,pointBorderColor:'#0B1120',pointBorderWidth:2,yAxisID:'y1',order:1,
-        datalabels:{display:true,anchor:'end',align:'top',offset:8,color:CO.indigo,font:{size:10,weight:'700'},formatter:function(v){return v;}}}
-    ]},
-    options:{layout:{padding:{top:26}},animation:{duration:800},interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
-      scales:{x:noGrid(),
-      y:Object.assign(axis(),{position:'left',title:{display:true,text:'Leads',color:CO.muted,font:{size:11}}}),
-      y1:{position:'right',grid:{display:false},border:{display:false},ticks:{color:CO.muted,font:{size:11}},title:{display:true,text:'Calls',color:CO.muted,font:{size:11}}}}}}));
-},
+  // ===========================================================================
+  // VIEW 4 — LEAD MIX & THE FREE-DEMAND LEVER
+  // ===========================================================================
+  function renderLeadmix() {
+    const w = A.weekly, an = A.analysis;
+    container.innerHTML = `<div class="dashboard-view">
+      ${headline("Lead Mix — The Bio Link Is Free Demand",
+        "30% of leads arrive through the bio link at zero CPL. That channel is worth $1,740/wk of demand and is the cheapest lever to fix the underwater ROAS.")}
+      ${kpiRow([
+        { label: "Total leads", value: "387", sub: "per week" },
+        { label: "Bio leads", value: "116", accent: "accent-green", sub: "30% share · $0 CPL" },
+        { label: "Paid leads", value: "271", sub: "$15 CPL" },
+        { label: "Bio value / wk", value: "$1,740", accent: "accent-green", sub: "free demand" },
+        { label: "Bio-attributable acq", value: "1.29", sub: "acq / week" },
+      ])}
+      <div class="chart-grid cols-2">
+        ${chartCard("lmDonut", "The bio link supplies 30% of leads at zero acquisition cost.", 360)}
+        ${chartCard("lmValue", "The bio link delivers $6,960/month of demand at zero CPL.", 360)}
+      </div>
+      ${stdInsight("<b>Bio leads are the cheapest lever to fix the underwater ROAS.</b> Every point of bio share added removes paid spend at the margin: the 116 bio leads/wk are equivalent to <b>$1,740</b> of paid demand ($6,960/mo, $90,480/yr) the plan gets for free, and they carry an estimated <b>1.29 acquisitions/wk</b>. Growing bio share from 30% toward 40% is worth more per dollar than buying additional paid leads at $15 CPL.")}
+    </div>`;
 
-/* ---------- LEAD MIX ---------- */
-leadmix:function(c){
-  c.innerHTML =
-  '<div class="dashboard-view">'+
-  '<div class="strategic-headline">Lead Mix — Bio vs Paid</div>'+
-  '<div class="strategic-subtitle">30% of the weekly lead mix comes directly from the website bio link.</div>'+
+    killCharts();
 
-  '<div class="kpi-row cols-3">'+
-    kpi('TOTAL LEADS / WEEK','387','all at $15 / lead')+
-    kpi('WEBSITE BIO LEADS','116','30% of the mix','green')+
-    kpi('OTHER PAID LEADS','271','70% of the mix')+
-  '</div>'+
+    // Chart A: doughnut bio vs paid with % datalabels
+    mkChart("lmDonut", {
+      type: "doughnut",
+      data: {
+        labels: ["Bio (free)", "Paid ($15 CPL)"],
+        datasets: [{
+          data: [w.bio, w.paid],
+          backgroundColor: ["rgba(16,185,129,0.55)", "rgba(99,102,241,0.45)"],
+          borderColor: [C.emerald, C.indigo], borderWidth: 1.5,
+          datalabels: {
+            display: true, color: "#F1F5F9", font: { size: 13, weight: "700", family: "Inter" },
+            formatter: (v) => Math.round(v / (w.bio + w.paid) * 100) + "%",
+          },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        cutout: "58%",
+        plugins: {
+          legend: { position: "bottom", labels: { color: C.textSec, font: { size: 11, family: "Inter" }, boxWidth: 12, padding: 14 } },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => ctx.label + ": " + ctx.parsed + " leads",
+            afterLabel: (ctx) => (ctx.dataIndex === 0 ? "  Worth $1,740/wk at $15 CPL" : "  $4,065/wk of ad spend"),
+          } },
+        },
+      },
+    });
 
-  '<div class="chart-grid cols-2">'+
-    '<div class="chart-card"><div class="chart-insight-title">Nearly a third of demand arrives free from the bio</div><div class="chart-insight-stat">Weekly split · website bio vs other paid</div><div class="chart-wrap" style="height:300px"><canvas id="cMix" height="240"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">Mix stays constant as spend scales across the month</div><div class="chart-insight-stat">Leads per week · stacked bio + paid</div><div class="chart-wrap" style="height:300px"><canvas id="cMixMonth" height="240"></canvas></div></div>'+
-  '</div>'+
+    // Chart B: imputed $ value of bio demand per week / month
+    mkChart("lmValue", {
+      type: "bar",
+      data: {
+        labels: ["Per week", "Per month"],
+        datasets: [{
+          label: "Imputed bio value",
+          data: [an.bioValueWk, an.bioValueMo],
+          backgroundColor: "rgba(16,185,129,0.5)", borderColor: C.emerald,
+          borderWidth: 1.5, borderRadius: barRadius,
+          datalabels: { display: true, anchor: "end", align: "top", color: C.emerald,
+            font: { size: 11, weight: "700", family: "Inter" }, formatter: (v) => dlFmtK(v) },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            label: (ctx) => ctx.label + ": " + fmtDollar(ctx.parsed.y),
+            afterBody: (items) => [items[0].dataIndex === 0 ? "  116 bio leads × $15 CPL equivalent" : "  464 bio leads/mo × $15 CPL equivalent"],
+          } },
+        },
+        scales: { x: baseScaleX, y: { ...baseScaleY("Imputed $ value"), suggestedMax: 8000 } },
+      },
+    });
+  }
 
-  '<div class="std-insight">The <b style="color:#fff">116 weekly bio leads</b> (464/month) are the highest-intent, lowest-friction segment in the plan — they chose to click through from the profile. Protecting and growing the bio share is the cheapest lever to improve blended CAC without raising ad spend.</div>'+
-  '</div>';
+  // ===========================================================================
+  // VIEW 5 — PATH TO TARGET — SENSITIVITY
+  // ===========================================================================
+  function renderTarget() {
+    const an = A.analysis;
+    const convPct = an.convRange.map((c) => (c * 100).toFixed(1).replace(/\.0$/, "") + "%");
+    const contLabels = an.contRange.map((c) => Math.round(c * 100) + "%");
+    const seriesColors = [C.textMuted, C.cyan, C.indigo, C.amber, C.emerald];
 
-  killCharts();
-  charts.push(new Chart(document.getElementById('cMix'),{type:'doughnut',
-    data:{labels:['Website bio (30%)','Other paid (70%)'],datasets:[{data:[116,271],
-      backgroundColor:[CO.emerald,CO.indigo],hoverBackgroundColor:[hexA(CO.emerald,1),hexA(CO.indigo,1)],
-      borderColor:'rgba(11,17,32,.55)',borderWidth:3,hoverOffset:8,spacing:2}]},
-    options:{cutout:'64%',animation:{animateRotate:true,duration:800},
-      plugins:{legend:{position:'bottom',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:18,font:{size:12}}},tooltip:Object.assign({},TT,{callbacks:{label:function(ctx){return ' '+ctx.label.replace(/ \(.*\)/,'')+': '+ctx.raw+' leads';}}}),
-        datalabels:{display:true,color:'#fff',font:{size:13,weight:'800'},formatter:function(v,ctx){return Math.round(v/ctx.chart._metasets[0].total*100)+'%';}}}}}));
-  charts.push(new Chart(document.getElementById('cMixMonth'),{type:'bar',
-    data:{labels:['Week 1','Week 2','Week 3','Week 4'],datasets:[
-      {label:'Website bio',data:[116,116,116,116],backgroundColor:function(ctx){return vGrad(ctx,CO.emerald);},hoverBackgroundColor:hexA(CO.emerald,1),borderRadius:{bottomLeft:7,bottomRight:7},borderSkipped:false,barPercentage:0.6,categoryPercentage:0.7,
-        datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},formatter:function(v){return v;}}},
-      {label:'Other paid',data:[271,271,271,271],backgroundColor:function(ctx){return vGrad(ctx,CO.indigo);},hoverBackgroundColor:hexA(CO.indigo,1),borderRadius:{topLeft:7,topRight:7},borderSkipped:false,barPercentage:0.6,categoryPercentage:0.7,
-        datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},formatter:function(v){return v;}}}
-    ]},
-    options:{animation:{duration:800},
-      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
-      scales:{x:Object.assign(noGrid(),{stacked:true}),y:Object.assign(axis(),{stacked:true})}}}));
-},
+    // one line per contacted rate, across conversion range
+    const gridDatasets = an.sens.map((row, i) => ({
+      label: contLabels[i] + " contacted",
+      data: row,
+      borderColor: seriesColors[i],
+      backgroundColor: seriesColors[i],
+      pointRadius: row.map((v) => (v >= 6 ? 6 : 3)),
+      pointHoverRadius: 8,
+      pointBackgroundColor: row.map((v) => (v >= 6 ? C.emerald : seriesColors[i])),
+      pointBorderColor: row.map((v) => (v >= 6 ? C.emerald : seriesColors[i])),
+      borderWidth: 2, tension: 0.15,
+      datalabels: {
+        display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 6 && ctx.dataset.data[ctx.dataIndex] < 6.5,
+        color: C.emerald, font: { size: 8, weight: "700", family: "Inter" },
+        align: "top", offset: 4, formatter: (v) => v.toFixed(1),
+      },
+    }));
 
-/* ---------- TARGET & GAP ---------- */
-target:function(c){
-  c.innerHTML =
-  '<div class="dashboard-view">'+
-  '<div class="strategic-headline">Target &amp; Gap — Hitting 6 / Week</div>'+
-  '<div class="strategic-subtitle">What the plan inputs deliver versus the 6 acquisitions / week target — and exactly what closes the gap.</div>'+
+    // contacted-rate sweep at fixed 3% conversion (index 2 of convRange)
+    const sweepData = an.sens.map((row) => row[2]);
 
-  '<div class="kpi-row cols-4">'+
-    kpi('TARGET','6.0','acquisitions / week','green')+
-    kpi('MODELED','4.3','143 contacted × 3%','amber')+
-    kpi('CONVERSION TO HIT 6','4.2%','if contacted stays 37%')+
-    kpi('CONTACTED TO HIT 6','51.7%','if conversion stays 3%')+
-  '</div>'+
+    container.innerHTML = `<div class="dashboard-view">
+      ${headline("Path to Target — Two Levers, Both Worth $107K/yr",
+        "Hitting 6 acquisitions/wk needs either conversion lifted 3% → 4.2% or the contact rate lifted 37% → 52%. Only the top-right of the sensitivity grid clears the target.")}
+      ${kpiRow([
+        { label: "Target", value: "6.0", accent: "accent-green", sub: "acq / week" },
+        { label: "Modeled", value: "4.3", accent: "accent-amber", sub: "acq / week" },
+        { label: "Conversion to hit 6", value: "4.2%", sub: "from 3.0%" },
+        { label: "Contact rate to hit 6", value: "51.7%", sub: "from 37%" },
+        { label: "Contacted needed", value: "200", accent: "accent-red", sub: "have 143 / wk" },
+      ])}
+      <div class="chart-grid cols-2">
+        ${chartCard("tgGrid", "Only the top-right of the grid clears 6/week.", 380)}
+        ${chartCard("tgSweep", "A 52% contact rate is the single lever that crosses 6/week.", 380)}
+      </div>
+      ${dataTable("Sensitivity Grid — Acquisitions/wk by Contact Rate × Conversion",
+        ["Contacted ↓ / Conv →"].concat(convPct),
+        an.sens.map((row, i) => [
+          { v: contLabels[i] + " contacted", style: "font-weight:600;" }
+        ].concat(row.map((v) => ({
+          v: v.toFixed(2),
+          style: v >= 6 ? "color:#10B981;font-weight:700;background:rgba(16,185,129,0.10);"
+                        : "color:#94A3B8;",
+        }))))
+      )}
+      ${verdict("Verdict — Two Independent Levers",
+        "Closing the gap to 6/wk requires roughly <b>200 contacted leads/wk vs the 143 the plan reaches today</b>. There are two independent ways to get there: <b>lift conversion 3% → 4.2%</b> (better calls/offer), OR <b>lift the contact rate 37% → 52%</b> (faster/more persistent dialing). Either lever alone crosses the target; each is worth <b style='color:#10B981'>$2,050/wk — $106,579/yr</b>. The green cells in the grid mark every combination that clears 6.",
+        true)}
+    </div>`;
 
-  '<div class="verdict-banner" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.18);border-left-color:#F59E0B">'+
-    '<div class="verdict-label" style="color:#F59E0B">Gap to Target</div>'+
-    '<div class="verdict-text">At $15/lead, 37% contacted and 3% conversion, the plan yields <b style="color:#fff">4.3 acquisitions/week</b> — 1.7 short of the <b style="color:#fff">6/week target</b>. Closing the gap needs <b style="color:#fff">~200 contacted leads/week</b> (vs 143 modeled): either lift <b style="color:#fff">conversion to 4.2%</b> at today\'s contact rate, or lift <b style="color:#fff">contacted rate to ~52%</b> at 3% conversion. Both levers act on the same driver — more contacted volume per week.</div>'+
-  '</div>'+
+    killCharts();
 
-  '<div class="chart-grid cols-2" style="margin-top:22px">'+
-    '<div class="chart-card"><div class="chart-insight-title">The inputs land 1.7 acquisitions below target</div><div class="chart-insight-stat">Acquisitions / week · target vs modeled</div><div class="chart-wrap" style="height:300px"><canvas id="cGap" height="240"></canvas></div></div>'+
-    '<div class="chart-card"><div class="chart-insight-title">A 52% contact rate crosses the 6/week line</div><div class="chart-insight-stat">Acquisitions/week by contacted rate · dashed = target (at 3% conversion)</div><div class="chart-wrap" style="height:300px"><canvas id="cSweep" height="240"></canvas></div></div>'+
-  '</div>'+
-  '</div>';
+    // Chart A: sensitivity family of lines, target=6 shaded zone + dashed line
+    mkChart("tgGrid", {
+      type: "line",
+      data: { labels: convPct, datasets: gridDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        interaction: { mode: "nearest", intersect: true },
+        plugins: {
+          legend: { labels: { color: C.textSec, font: { size: 10, family: "Inter" }, boxWidth: 12, padding: 10 } },
+          tooltip: { ...baseTooltip, mode: "nearest", intersect: true, callbacks: {
+            title: (items) => "Conversion " + items[0].label,
+            label: (ctx) => ctx.dataset.label + ": " + ctx.parsed.y.toFixed(2) + " acq/wk",
+            afterLabel: (ctx) => (ctx.parsed.y >= 6 ? "  ✓ clears the 6-acq target" : "  ✗ below target"),
+          } },
+        },
+        scales: {
+          x: { ...baseScaleX, title: { display: true, text: "Conversion rate →", color: C.indigo, font: { size: 11, weight: "600" } } },
+          y: { ...baseScaleY("Acquisitions / week"), ticks: { color: C.textMuted, font: { size: 9 }, callback: (v) => v }, suggestedMax: 12 },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        bands: [{ axis: "y", from: 6, to: 12, color: "rgba(16,185,129,0.07)", label: "CLEARS TARGET (≥6)", labelColor: C.emerald }],
+        lines: [{ axis: "y", at: 6, color: C.emerald, label: "Target 6/wk" }],
+      }) ],
+    });
 
-  killCharts();
-  var gCol=[CO.emerald,CO.amber];
-  charts.push(new Chart(document.getElementById('cGap'),{type:'bar',
-    data:{labels:['Target','Modeled (3%)'],datasets:[{data:[6,4.3],
-      backgroundColor:function(ctx){return vGrad(ctx,gCol[ctx.dataIndex]);},
-      hoverBackgroundColor:function(ctx){return hexA(gCol[ctx.dataIndex],1);},
-      borderRadius:12,borderSkipped:false,barPercentage:0.5,categoryPercentage:0.6}]},
-    options:{layout:{padding:{top:26}},animation:{duration:800},
-      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true,anchor:'end',align:'end',offset:3,color:function(ctx){return gCol[ctx.dataIndex];},font:{size:15,weight:'800'},formatter:function(v){return v.toFixed(1);}}},
-      scales:{x:noGrid(),y:axis({min:0,max:6.8,ticks:{color:CO.muted,font:{size:11},stepSize:2}})}}}));
-  var rates=[0.37,0.42,0.47,0.517,0.57], acqs=rates.map(function(r){return +(387*r*0.03).toFixed(2);});
-  charts.push(new Chart(document.getElementById('cSweep'),{type:'line',
-    data:{labels:rates.map(function(r){return Math.round(r*100)+'%';}),datasets:[
-      {label:'Acquisitions / week',data:acqs,borderColor:CO.cyan,backgroundColor:function(ctx){return areaGrad(ctx,CO.cyan);},fill:true,borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,pointBackgroundColor:CO.cyan,pointBorderColor:'#0B1120',pointBorderWidth:2,
-        datalabels:{display:true,anchor:'end',align:'top',offset:8,color:CO.cyan,font:{size:11,weight:'700'},formatter:function(v){return v.toFixed(1);}}},
-      {label:'Target (6)',data:rates.map(function(){return 6;}),borderColor:CO.emerald,borderWidth:2,borderDash:[6,5],pointRadius:0,fill:false,datalabels:{display:false}}
-    ]},
-    options:{layout:{padding:{top:26}},animation:{duration:800},interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'top',align:'end',labels:{color:CO.sec,usePointStyle:true,pointStyle:'circle',padding:16,font:{size:11}}},tooltip:TT},
-      scales:{x:noGrid(),y:axis({min:4,max:7})}}}));
-}
-};
+    // Chart B: contacted-rate sweep at fixed 3% conversion with 52% threshold chip
+    mkChart("tgSweep", {
+      type: "line",
+      data: {
+        labels: contLabels,
+        datasets: [{
+          label: "Acquisitions/wk @ 3% conversion",
+          data: sweepData,
+          borderColor: C.cyan, backgroundColor: "rgba(6,182,212,0.10)", fill: true, tension: 0.2,
+          pointRadius: sweepData.map((v) => (v >= 6 ? 7 : 4)),
+          pointHoverRadius: 9,
+          pointBackgroundColor: sweepData.map((v) => (v >= 6 ? C.emerald : C.cyan)),
+          pointBorderColor: sweepData.map((v) => (v >= 6 ? C.emerald : C.cyan)),
+          datalabels: { display: true, anchor: "end", align: "top",
+            color: sweepData.map((v) => (v >= 6 ? C.emerald : C.cyan)),
+            font: { size: 9, weight: "700", family: "Inter" }, formatter: (v) => v.toFixed(2) },
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: baseAnim,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...baseTooltip, callbacks: {
+            title: (items) => "Contact rate " + items[0].label,
+            label: (ctx) => ctx.parsed.y.toFixed(2) + " acq/wk",
+            afterBody: (items) => {
+              const v = sweepData[items[0].dataIndex];
+              return [v >= 6 ? "  ✓ crosses the 6-acq target" : "  ✗ below target — need 52%+"];
+            },
+          } },
+        },
+        scales: {
+          x: { ...baseScaleX, title: { display: true, text: "Contact rate →", color: C.cyan, font: { size: 11, weight: "600" } } },
+          y: { ...baseScaleY("Acquisitions / week"), ticks: { color: C.textMuted, font: { size: 9 }, callback: (v) => v }, suggestedMax: 9 },
+        },
+      },
+      plugins: [ makeAnnotPlugin({
+        bands: [{ axis: "y", from: 6, to: 9, color: "rgba(16,185,129,0.07)", label: "TARGET ZONE (≥6)", labelColor: C.emerald }],
+        lines: [
+          { axis: "y", at: 6, color: C.emerald, label: "Target 6/wk" },
+          { axis: "x", at: "52%", color: C.amber, label: "52% threshold" },
+        ],
+      }) ],
+    });
+  }
 
-/* ============================================================
-   ROUTER
-   ============================================================ */
-var container = document.getElementById('dashboardContainer');
-function render(view){
-  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view===view); });
-  (VIEWS[view]||VIEWS.overview)(container);
-  window.scrollTo(0,0);
-}
-document.querySelectorAll('.nav-item').forEach(function(b){
-  b.addEventListener('click',function(){ render(b.dataset.view); if(window.innerWidth<=768){ closeSidebar(); } });
-});
-/* mobile */
-var sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
-function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
-function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
-document.getElementById('menuToggle').addEventListener('click',openSidebar);
-overlay.addEventListener('click',closeSidebar);
+  // ===========================================================================
+  // ROUTER
+  // ===========================================================================
+  const views = {
+    overview: renderOverview,
+    economics: renderEconomics,
+    cadence: renderCadence,
+    leadmix: renderLeadmix,
+    target: renderTarget,
+  };
+  let activeView = "overview";
+  function render() {
+    killCharts();
+    (views[activeView] || renderOverview)();
+  }
 
-render('overview');
+  document.querySelectorAll(".nav-item[data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const v = btn.dataset.view;
+      document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeView = v;
+      render();
+      closeMobileSidebar();
+    });
+  });
+
+  // Mobile sidebar
+  const menuToggle = $("#menuToggle");
+  const sidebar = $("#sidebar");
+  const overlay = $("#sidebarOverlay");
+  function closeMobileSidebar() {
+    if (sidebar) sidebar.classList.remove("open");
+    if (overlay) overlay.classList.remove("active");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("active");
+  });
+  if (overlay) overlay.addEventListener("click", closeMobileSidebar);
+
+  // initial render
+  render();
+})();
 </script>
+
+<style>
+/* Small additive styling for the kpi sub-line only (does not touch styles.css) */
+.kpi-sub { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 4px; }
+.strategic-headline { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; }
+.strategic-subtitle { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 26px; line-height: 1.55; max-width: 900px; }
+</style>
+
 </body>
 </html>
