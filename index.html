@@ -1,339 +1,340 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<!--
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Longevity — July CEO Plan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-:root{
-  --bg-deep:#0B1120;--bg-main:#0F172A;--bg-surface:#1E293B;
-  --bg-card:rgba(30,41,59,.6);--bg-card-hover:rgba(30,41,59,.8);
-  --border-subtle:rgba(148,163,184,.12);--border-active:rgba(99,102,241,.4);
-  --text-primary:#F1F5F9;--text-secondary:#94A3B8;--text-muted:#64748B;
-  --accent-indigo:#6366F1;--accent-cyan:#06B6D4;--accent-amber:#F59E0B;--accent-emerald:#10B981;--accent-red:#EF4444;--accent-violet:#A78BFA;
-  --sidebar-width:240px;
-  --radius-sm:6px;--radius-md:10px;--radius-lg:14px;
-  --shadow-card:0 1px 3px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.15);
-  --shadow-hover:0 4px 12px rgba(0,0,0,.4),0 8px 32px rgba(0,0,0,.2);
-  --ease-out:cubic-bezier(.16,1,.3,1);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100vh;display:flex;overflow-x:hidden}
-button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
-
-/* sidebar */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-width);background:var(--bg-main);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;z-index:100;transition:transform .3s var(--ease-out)}
-.sidebar-header{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--border-subtle)}
-.sidebar-logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(150deg,var(--accent-indigo),var(--accent-cyan));color:#fff;font-weight:800;font-size:13px;letter-spacing:-.5px;flex-shrink:0}
-.sidebar-title{font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--text-primary);line-height:1.2}
-.sidebar-title small{display:block;font-size:11px;font-weight:500;color:var(--text-muted)}
-.sidebar-nav{flex:1;overflow-y:auto;padding:12px 10px}
-.nav-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);padding:16px 10px 6px}
-.nav-section-label:first-child{padding-top:4px}
-.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:400;color:var(--text-secondary);transition:all .15s ease;text-align:left}
-.nav-item:hover{background:rgba(99,102,241,.08);color:var(--text-primary)}
-.nav-item.active{background:rgba(99,102,241,.12);color:var(--accent-indigo);font-weight:500}
-.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:.7}
-.nav-item.active .nav-icon{opacity:1}
-.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border-subtle);font-size:11px;color:var(--text-muted);line-height:1.5}
-
-/* mobile header */
-.mobile-header{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--bg-main);border-bottom:1px solid var(--border-subtle);align-items:center;gap:12px;padding:0 16px;z-index:90}
-.menu-toggle svg{width:22px;height:22px}
-.mobile-title{font-size:14px;font-weight:600}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
-
-/* main */
-.main-content{margin-left:var(--sidebar-width);flex:1;min-height:100vh;padding:28px 32px 48px;background:var(--bg-deep)}
-.dashboard-container{max-width:1320px;margin:0 auto}
-.db-title{font-size:20px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px}
-.db-sub{font-size:13px;color:var(--text-secondary);margin-bottom:22px}
-.view{display:none} .view.active{display:block;animation:fadeSlideIn .35s var(--ease-out) both}
-@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-
-/* KPI */
-.kpi-row{display:grid;gap:14px;margin-bottom:22px}
-.cols-3{grid-template-columns:repeat(3,1fr)}.cols-4{grid-template-columns:repeat(4,1fr)}.cols-5{grid-template-columns:repeat(5,1fr)}
-.kpi-card{position:relative;background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px 18px;transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out),border-color .2s;overflow:hidden}
-.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:var(--border-active)}
-.kpi-card .accent{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-indigo)}
-.kpi-card.c-cyan .accent{background:var(--accent-cyan)}.kpi-card.c-amber .accent{background:var(--accent-amber)}.kpi-card.c-emerald .accent{background:var(--accent-emerald)}.kpi-card.c-red .accent{background:var(--accent-red)}.kpi-card.c-violet .accent{background:var(--accent-violet)}
-.kpi-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px}
-.kpi-value{font-size:28px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15}
-.kpi-value.large{font-size:34px}
-.kpi-note{font-size:11.5px;color:var(--text-muted);margin-top:7px;font-weight:500}
-.c-indigo .kpi-value{color:#C7CBFF}.c-cyan .kpi-value{color:#9EE9F5}.c-amber .kpi-value{color:#FCD68A}.c-emerald .kpi-value{color:#8EE9C6}.c-red .kpi-value{color:#FCA5A5}.c-violet .kpi-value{color:#CBB9FF}
-
-/* charts */
-.chart-grid{display:grid;gap:16px;margin-bottom:22px}
-.chart-grid.cols-2{grid-template-columns:repeat(2,1fr)}
-.span-2{grid-column:span 2}
-.chart-card{background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-card);transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
-.chart-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover)}
-.chart-card-title{font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:4px}
-.chart-card-sub{font-size:11.5px;color:var(--text-muted);margin-bottom:14px}
-.chart-wrap{position:relative;width:100%}
-
-/* table */
-.data-table-card{background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-card);overflow:hidden}
-.data-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums}
-.data-table th{background:rgba(15,23,42,.85);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);padding:10px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--border-subtle)}
-.data-table th:first-child{text-align:left}
-.data-table td{padding:10px 12px;color:var(--text-secondary);text-align:right;white-space:nowrap;border-bottom:1px solid rgba(148,163,184,.05)}
-.data-table td:first-child{text-align:left;font-weight:500;color:var(--text-primary)}
-.data-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
-.data-table tbody tr:hover td{background:rgba(99,102,241,.06)}
-.data-table tr.muted td{color:var(--text-muted)}
-.data-table tr.tot td{border-top:2px solid var(--border-active);font-weight:700;color:var(--text-primary);padding-top:13px}
-
-/* verdict / callout */
-.verdict{border-radius:var(--radius-md);padding:18px 22px;margin-bottom:22px}
-.verdict.emerald{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.18);border-left:4px solid var(--accent-emerald)}
-.verdict.amber{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-left:4px solid var(--accent-amber)}
-.verdict .vl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
-.verdict.emerald .vl{color:var(--accent-emerald)} .verdict.amber .vl{color:var(--accent-amber)}
-.verdict .vt{font-size:14px;line-height:1.65;color:var(--text-secondary)}
-.verdict .vt b{color:var(--text-primary);font-weight:600}
-.assumptions{font-size:11.5px;color:var(--text-muted);margin-top:6px;line-height:1.7}
-.assumptions b{color:var(--text-secondary)}
-
-@media(max-width:1024px){.cols-4,.cols-5{grid-template-columns:repeat(3,1fr)}.chart-grid.cols-2{grid-template-columns:1fr}.span-2{grid-column:span 1}}
-@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.active{display:block}.mobile-header{display:flex}.main-content{margin-left:0;padding:68px 16px 32px}.cols-3,.cols-4,.cols-5{grid-template-columns:repeat(2,1fr)}.kpi-value{font-size:22px}.kpi-value.large{font-size:26px}}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.15);border-radius:3px}
-</style></head>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
 <body>
 
-<div class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-logo">L</div>
-    <div class="sidebar-title">Longevity<small>July CEO Plan</small></div>
+    <svg class="sidebar-logo" viewBox="0 0 32 32" fill="none" aria-label="CEO Suite logo">
+      <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M8 16h16M16 8v16" stroke="#6366F1" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="16" cy="16" r="4" fill="#6366F1" opacity="0.3"/>
+    </svg>
+    <span class="sidebar-title">Longevity — July Plan</span>
   </div>
-  <nav class="sidebar-nav" id="nav">
-    <div class="nav-section-label">Planning</div>
-    <button class="nav-item active" data-view="overview"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Overview</button>
-    <button class="nav-item" data-view="economics"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Weekly Economics</button>
-    <button class="nav-item" data-view="cadence"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Daily Cadence</button>
-    <button class="nav-item" data-view="leadmix"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H12z"/></svg>Lead Mix</button>
-    <button class="nav-item" data-view="target"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Target &amp; Gap</button>
+
+  <nav class="sidebar-nav" id="sidebarNav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" data-view="overview">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="nav-icon"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+      📋 Strategic Overview
+    </button>
+
+    <div class="nav-section-label">Economics</div>
+    <button class="nav-item" data-view="economics">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="nav-icon"><path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm5 2a1 1 0 011-1h2a1 1 0 011 1v10a1 1 0 01-1 1H8a1 1 0 01-1-1V6zm5-4a1 1 0 011-1h2a1 1 0 011 1v14a1 1 0 01-1 1h-2a1 1 0 01-1-1V2z"/></svg>
+      💰 Weekly Economics
+    </button>
+    <button class="nav-item" data-view="cadence">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="nav-icon"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+      📅 Daily Cadence
+    </button>
+
+    <div class="nav-section-label">Demand</div>
+    <button class="nav-item" data-view="leadmix">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="nav-icon"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+      🎯 Lead Mix
+    </button>
+    <button class="nav-item" data-view="target">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="nav-icon"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"/></svg>
+      🚀 Target &amp; Gap
+    </button>
   </nav>
-  <div class="sidebar-footer">Longevity · CEO plan format<br>Model as of July 2026</div>
-</div>
-<div class="sidebar-overlay" id="overlay"></div>
 
-<div class="mobile-header"><button class="menu-toggle" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="mobile-title">Longevity — July CEO Plan</div></div>
+  <div class="sidebar-footer">
+    <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+  </div>
+</aside>
 
-<div class="main-content"><div class="dashboard-container">
+<header class="mobile-header" id="mobileHeader">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="mobile-title">Longevity — July Plan</span>
+</header>
 
-<!-- ===== OVERVIEW ===== -->
-<div class="view active" id="view-overview">
-  <div class="db-title">July Plan — Overview</div>
-  <div class="db-sub">3-rep team · $15 cost per lead · $1,200 per acquisition · weekly targets</div>
-  <div class="kpi-row cols-5">
-    <div class="kpi-card c-indigo"><div class="accent"></div><div class="kpi-label">Weekly Spend</div><div class="kpi-value">$5,800</div><div class="kpi-note">$1K ×5 + $400 Sat + $400 Sun</div></div>
-    <div class="kpi-card c-cyan"><div class="accent"></div><div class="kpi-label">Weekly Leads</div><div class="kpi-value">387</div><div class="kpi-note">at $15 / lead</div></div>
-    <div class="kpi-card c-violet"><div class="accent"></div><div class="kpi-label">Contacted</div><div class="kpi-value">143</div><div class="kpi-note">37% contacted rate</div></div>
-    <div class="kpi-card c-emerald"><div class="accent"></div><div class="kpi-label">Acq Target</div><div class="kpi-value">6</div><div class="kpi-note">per week · 24 / month</div></div>
-    <div class="kpi-card c-amber"><div class="accent"></div><div class="kpi-label">Revenue @ Target</div><div class="kpi-value">$7,200</div><div class="kpi-note">6 acq × $1,200</div></div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card span-2"><div class="chart-card-title">Weekly funnel</div><div class="chart-card-sub">Leads → contacted (37%) → acquisitions (target 6)</div><div class="chart-wrap"><canvas id="cFunnel" height="150"></canvas></div></div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card"><div class="chart-card-title">Monthly plan (4 weeks)</div><div class="chart-card-sub">Spend, leads, contacted, revenue at target</div><div class="chart-wrap"><canvas id="cMonthly" height="220"></canvas></div></div>
-    <div class="chart-card"><div class="chart-card-title">Revenue vs spend</div><div class="chart-card-sub">Weekly · target vs modeled at 3% conversion</div><div class="chart-wrap"><canvas id="cRevSpend" height="220"></canvas></div></div>
-  </div>
-  <div class="assumptions">
-    <b>Assumptions:</b> $15 cost per lead · $1,000/day Mon–Fri + $400 Sat + $400 Sun · 3 reps (down from 5) · no reps on weekends (weekend leads worked at start of the following week, not lost) · $1,200 per acquisition · 37% contacted rate · 3% acquisition-per-contacted-lead · 9 calls per lead per day · 30% of the lead mix are direct website bio leads.
-  </div>
-</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- ===== WEEKLY ECONOMICS ===== -->
-<div class="view" id="view-economics">
-  <div class="db-title">Weekly Economics</div>
-  <div class="db-sub">Unit economics at plan inputs</div>
-  <div class="kpi-row cols-4">
-    <div class="kpi-card c-indigo"><div class="accent"></div><div class="kpi-label">Spend / Week</div><div class="kpi-value">$5,800</div><div class="kpi-note">$23,200 / month</div></div>
-    <div class="kpi-card c-emerald"><div class="accent"></div><div class="kpi-label">Revenue @ Target</div><div class="kpi-value">$7,200</div><div class="kpi-note">6 acq × $1,200</div></div>
-    <div class="kpi-card c-cyan"><div class="accent"></div><div class="kpi-label">ROAS @ Target</div><div class="kpi-value">1.24×</div><div class="kpi-note">revenue ÷ spend</div></div>
-    <div class="kpi-card c-amber"><div class="accent"></div><div class="kpi-label">CAC @ Target</div><div class="kpi-value">$967</div><div class="kpi-note">$5,800 ÷ 6 acq</div></div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card"><div class="chart-card-title">Cost per lead → cost per acquisition</div><div class="chart-card-sub">$15 lead · 37% contacted · 3% conversion</div><div class="chart-wrap"><canvas id="cCostChain" height="230"></canvas></div></div>
-    <div class="chart-card"><div class="chart-card-title">Profit sensitivity by acquisitions / week</div><div class="chart-card-sub">Revenue − $5,800 spend · target = 6</div><div class="chart-wrap"><canvas id="cProfit" height="230"></canvas></div></div>
-  </div>
-  <div class="data-table-card">
-    <div class="chart-card-title" style="margin-bottom:14px">Economics detail</div>
-    <table class="data-table"><thead><tr><th>Metric</th><th>Per week</th><th>Per month (×4)</th></tr></thead>
-    <tbody id="econRows"></tbody></table>
-  </div>
-</div>
-
-<!-- ===== DAILY CADENCE ===== -->
-<div class="view" id="view-cadence">
-  <div class="db-title">Daily Cadence</div>
-  <div class="db-sub">Leads, contacted and calls by day · 9 calls per lead · 3 reps, weekdays only</div>
-  <div class="kpi-row cols-4">
-    <div class="kpi-card c-cyan"><div class="accent"></div><div class="kpi-label">Leads / Weekday</div><div class="kpi-value">67</div><div class="kpi-note">$1,000 ÷ $15</div></div>
-    <div class="kpi-card c-indigo"><div class="accent"></div><div class="kpi-label">Calls / Weekday</div><div class="kpi-value">600</div><div class="kpi-note">67 leads × 9 calls</div></div>
-    <div class="kpi-card c-violet"><div class="accent"></div><div class="kpi-label">Calls / Rep / Day</div><div class="kpi-value">200</div><div class="kpi-note">600 ÷ 3 reps</div></div>
-    <div class="kpi-card c-amber"><div class="accent"></div><div class="kpi-label">Weekend Leads</div><div class="kpi-value">53</div><div class="kpi-note">Sat+Sun · worked start of week</div></div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card span-2"><div class="chart-card-title">Leads &amp; calls by day of week</div><div class="chart-card-sub">Weekend leads (grey) handled at the start of the following week — not lost</div><div class="chart-wrap"><canvas id="cDaily" height="140"></canvas></div></div>
-  </div>
-  <div class="data-table-card">
-    <div class="chart-card-title" style="margin-bottom:14px">Daily plan</div>
-    <table class="data-table"><thead><tr><th>Day</th><th>Spend</th><th>Leads</th><th>Contacted (37%)</th><th>Calls (9/lead)</th><th>Calls / Rep</th></tr></thead>
-    <tbody id="dailyRows"></tbody></table>
-  </div>
-</div>
-
-<!-- ===== LEAD MIX ===== -->
-<div class="view" id="view-leadmix">
-  <div class="db-title">Lead Mix</div>
-  <div class="db-sub">30% of the weekly lead mix are direct website bio leads</div>
-  <div class="kpi-row cols-3">
-    <div class="kpi-card c-cyan"><div class="accent"></div><div class="kpi-label">Total Leads / Week</div><div class="kpi-value">387</div><div class="kpi-note">at $15 / lead</div></div>
-    <div class="kpi-card c-violet"><div class="accent"></div><div class="kpi-label">Website Bio Leads</div><div class="kpi-value">116</div><div class="kpi-note">30% of the mix</div></div>
-    <div class="kpi-card c-indigo"><div class="accent"></div><div class="kpi-label">Other Paid Leads</div><div class="kpi-value">271</div><div class="kpi-note">70% of the mix</div></div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card"><div class="chart-card-title">Weekly lead mix</div><div class="chart-card-sub">Bio vs other paid</div><div class="chart-wrap" style="max-width:340px;margin:0 auto"><canvas id="cMix" height="260"></canvas></div></div>
-    <div class="chart-card"><div class="chart-card-title">Monthly lead mix (×4)</div><div class="chart-card-sub">Bio vs other paid</div><div class="chart-wrap"><canvas id="cMixMonth" height="260"></canvas></div></div>
-  </div>
-</div>
-
-<!-- ===== TARGET & GAP ===== -->
-<div class="view" id="view-target">
-  <div class="db-title">Target &amp; Gap</div>
-  <div class="db-sub">What the plan inputs deliver vs the 6 acquisitions / week target</div>
-  <div class="kpi-row cols-4">
-    <div class="kpi-card c-emerald"><div class="accent"></div><div class="kpi-label">Target</div><div class="kpi-value">6.0</div><div class="kpi-note">acquisitions / week</div></div>
-    <div class="kpi-card c-amber"><div class="accent"></div><div class="kpi-label">Modeled</div><div class="kpi-value">4.3</div><div class="kpi-note">143 contacted × 3%</div></div>
-    <div class="kpi-card c-cyan"><div class="accent"></div><div class="kpi-label">Conversion to Hit 6</div><div class="kpi-value">4.2%</div><div class="kpi-note">if contacted stays 37%</div></div>
-    <div class="kpi-card c-violet"><div class="accent"></div><div class="kpi-label">Contacted to Hit 6</div><div class="kpi-value">51.7%</div><div class="kpi-note">if conversion stays 3%</div></div>
-  </div>
-  <div class="verdict amber">
-    <div class="vl">Gap to target</div>
-    <div class="vt">At <b>$15/lead, 37% contacted and 3% conversion</b>, the plan yields <b>4.3 acquisitions/week</b> — short of the <b>6/week target</b>. Closing the gap needs <b>200 contacted leads/week</b> (vs 143 modeled): either lift <b>conversion to 4.2%</b> at today's contact rate, or lift <b>contacted rate to ~52%</b> at 3% conversion. Both levers act on the same driver — more contacted volume per week.</div>
-  </div>
-  <div class="chart-grid cols-2">
-    <div class="chart-card"><div class="chart-card-title">Acquisitions / week — target vs modeled</div><div class="chart-card-sub">Gap of 1.7 acquisitions</div><div class="chart-wrap"><canvas id="cGap" height="230"></canvas></div></div>
-    <div class="chart-card"><div class="chart-card-title">Acquisitions by contacted rate</div><div class="chart-card-sub">At 3% conversion · dashed = 6 target</div><div class="chart-wrap"><canvas id="cSweep" height="230"></canvas></div></div>
-  </div>
-</div>
-
-</div></div>
+<main class="main-content" id="mainContent">
+  <div class="dashboard-container" id="dashboardContainer"></div>
+</main>
 
 <script>
+/* ============================================================
+   PLAN MODEL — July 2026 (Longevity)
+   ============================================================ */
+var CO = { indigo:'#6366F1', cyan:'#06B6D4', amber:'#F59E0B', emerald:'#10B981', red:'#EF4444',
+  text:'#F1F5F9', sec:'#94A3B8', muted:'#64748B', grid:'rgba(148,163,184,.10)' };
+
 var PLAN = {
-  weekly:{spend:5800,leads:386.7,contacted:143.1,acq_model:4.29,acq_target:6,calls:3480,calls_per_rep:200,
-          rev_model:5150,rev_target:7200,roas_target:1.24,cac_target:967,bio:116,paid:271},
-  monthly:{spend:23200,leads:1547,contacted:572,acq_target:24,rev_target:28800,bio:464,paid:1083},
+  inputs:{ cpl:15, reps:3, acqTarget:6, price:1200, conv:0.03, contacted:0.37, callsPerLead:9, bioShare:0.30 },
+  weekly:{ spend:5800, leads:387, contacted:143, acqModel:4.3, acqTarget:6, calls:3480,
+    callsPerRep:200, revModel:5150, revTarget:7200, roasTarget:1.24, roasModel:0.89, cacTarget:967, bio:116, paid:271 },
+  monthly:{ spend:23200, leads:1547, contacted:572, acqModel:17.2, acqTarget:24, revTarget:28800, revModel:20602, bio:464, paid:1083 },
   daily:[
-    {d:'Mon',spend:1000,leads:66.7,cont:24.7,calls:600,cpr:200,wk:true},
-    {d:'Tue',spend:1000,leads:66.7,cont:24.7,calls:600,cpr:200,wk:true},
-    {d:'Wed',spend:1000,leads:66.7,cont:24.7,calls:600,cpr:200,wk:true},
-    {d:'Thu',spend:1000,leads:66.7,cont:24.7,calls:600,cpr:200,wk:true},
-    {d:'Fri',spend:1000,leads:66.7,cont:24.7,calls:600,cpr:200,wk:true},
-    {d:'Sat',spend:400,leads:26.7,cont:9.9,calls:240,cpr:0,wk:false},
-    {d:'Sun',spend:400,leads:26.7,cont:9.9,calls:240,cpr:0,wk:false}
+    { d:'Mon', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
+    { d:'Tue', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
+    { d:'Wed', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
+    { d:'Thu', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
+    { d:'Fri', spend:1000, leads:66.7, contacted:24.7, calls:600, perRep:200, wk:true },
+    { d:'Sat', spend:400,  leads:26.7, contacted:9.9,  calls:240, perRep:0,   wk:false },
+    { d:'Sun', spend:400,  leads:26.7, contacted:9.9,  calls:240, perRep:0,   wk:false }
   ]
 };
-var CO={indigo:'#6366F1',cyan:'#06B6D4',amber:'#F59E0B',emerald:'#10B981',red:'#EF4444',violet:'#A78BFA',
-        text:'#F1F5F9',text2:'#94A3B8',muted:'#64748B',grid:'rgba(148,163,184,.10)'};
 
-/* ---- nav ---- */
-document.querySelectorAll('.nav-item').forEach(function(b){
-  b.addEventListener('click',function(){
-    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-    document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
-    b.classList.add('active');
-    document.getElementById('view-'+b.dataset.view).classList.add('active');
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('overlay').classList.remove('active');
-    window.scrollTo({top:0,behavior:'smooth'});
-    if(!drawn[b.dataset.view]) drawView(b.dataset.view);
-  });
-});
-document.getElementById('menuBtn').addEventListener('click',function(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('active');});
-document.getElementById('overlay').addEventListener('click',function(){document.getElementById('sidebar').classList.remove('open');this.classList.remove('active');});
+/* ---- Chart.js defaults to match CEO suite ---- */
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = CO.sec;
+var charts = [];
+function killCharts(){ charts.forEach(function(c){ try{c.destroy();}catch(e){} }); charts = []; }
+function axis(opts){ return Object.assign({ grid:{ color:CO.grid, drawBorder:false }, ticks:{ color:CO.muted } }, opts||{}); }
+function noGrid(){ return { grid:{ display:false }, ticks:{ color:CO.muted } }; }
 
-/* ---- chart defaults ---- */
-Chart.defaults.font.family="'Inter',sans-serif";
-Chart.defaults.font.size=11.5;
-Chart.defaults.color=CO.text2;
-Chart.defaults.plugins.legend.labels.color=CO.text2;
-Chart.defaults.plugins.legend.labels.boxWidth=12;
-Chart.defaults.plugins.legend.labels.boxHeight=12;
-Chart.defaults.plugins.legend.labels.usePointStyle=true;
-Chart.defaults.animation.duration=800;
-function axis(stacked){return {grid:{color:CO.grid,drawBorder:false},ticks:{color:CO.muted},stacked:!!stacked};}
-function noGridX(){return {grid:{display:false,drawBorder:false},ticks:{color:CO.text2}};}
+function kpi(label, value, sub, accent){
+  return '<div class="kpi-card'+(accent?' accent-'+accent:'')+'">'+
+    '<div class="kpi-label">'+label+'</div>'+
+    '<div class="kpi-value">'+value+'</div>'+
+    (sub?'<div class="kpi-label" style="margin-top:8px;text-transform:none;letter-spacing:0;color:var(--text-muted);font-weight:400">'+sub+'</div>':'')+
+  '</div>';
+}
 
-var drawn={};
-function drawView(v){ drawn[v]=true; (VIEWS[v]||function(){})(); }
+/* ============================================================
+   VIEWS
+   ============================================================ */
+var VIEWS = {
 
-var VIEWS={
-  overview:function(){
-    new Chart(document.getElementById('cFunnel'),{type:'bar',data:{labels:['Leads','Contacted (37%)','Acquisitions (target)'],
-      datasets:[{data:[387,143,6],backgroundColor:[CO.cyan,CO.violet,CO.emerald],borderRadius:8,barThickness:38}]},
-      options:{indexAxis:'y',layout:{padding:{left:8}},plugins:{legend:{display:false},tooltip:{enabled:true}},scales:{x:axis(),y:Object.assign(noGridX(),{ticks:{color:CO.text,padding:6,crossAlign:'far'}})}}});
-    new Chart(document.getElementById('cMonthly'),{type:'bar',data:{labels:['Spend ($100s)','Leads','Contacted','Revenue ($100s)'],
-      datasets:[{data:[232,1547,572,288],backgroundColor:[CO.indigo,CO.cyan,CO.violet,CO.emerald],borderRadius:6}]},
-      options:{plugins:{legend:{display:false}},scales:{x:noGridX(),y:axis()}}});
-    new Chart(document.getElementById('cRevSpend'),{type:'bar',data:{labels:['Spend','Revenue @ target','Revenue @ model'],
-      datasets:[{data:[5800,7200,5150],backgroundColor:[CO.indigo,CO.emerald,CO.amber],borderRadius:6,barThickness:52}]},
-      options:{plugins:{legend:{display:false}},scales:{x:noGridX(),y:axis()}}});
-  },
-  economics:function(){
-    var t=document.getElementById('econRows');
-    var rows=[['Ad spend','$5,800','$23,200'],['Leads (@ $15)','387','1,547'],['Contacted (37%)','143','572'],
-      ['Acquisitions (target)','6','24'],['Acquisitions (model, 3%)','4.3','17.2'],
-      ['Revenue @ target','$7,200','$28,800'],['ROAS @ target','1.24×','1.24×'],['CAC @ target','$967','$967'],
-      ['Calls (9 / lead)','3,480','13,920']];
-    rows.forEach(function(r){var tr=document.createElement('tr');if(r[0].indexOf('model')>-1)tr.className='muted';tr.innerHTML='<td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td>';t.appendChild(tr);});
-    new Chart(document.getElementById('cCostChain'),{type:'bar',data:{labels:['Cost / lead','Cost / contacted','Cost / acquisition'],
-      datasets:[{data:[15,40.5,1350],backgroundColor:[CO.cyan,CO.violet,CO.amber],borderRadius:6,barThickness:56}]},
-      options:{plugins:{legend:{display:false}},scales:{x:noGridX(),y:Object.assign(axis(),{type:'logarithmic'})}}});
-    var acq=[3,4,5,6,7,8],prof=acq.map(function(a){return a*1200-5800;});
-    new Chart(document.getElementById('cProfit'),{type:'bar',data:{labels:acq.map(function(a){return a+' acq';}),
-      datasets:[{data:prof,backgroundColor:prof.map(function(p){return p>=0?CO.emerald:CO.red;}),borderRadius:6}]},
-      options:{plugins:{legend:{display:false}},scales:{x:noGridX(),y:axis()}}});
-  },
-  cadence:function(){
-    var t=document.getElementById('dailyRows');
-    PLAN.daily.forEach(function(x){var tr=document.createElement('tr');if(!x.wk)tr.className='muted';
-      tr.innerHTML='<td>'+x.d+(x.wk?'':' *')+'</td><td>$'+x.spend+'</td><td>'+x.leads.toFixed(1)+'</td><td>'+x.cont.toFixed(1)+'</td><td>'+x.calls+'</td><td>'+(x.wk?x.cpr:'—')+'</td>';t.appendChild(tr);});
-    var tr=document.createElement('tr');tr.className='tot';tr.innerHTML='<td>Week</td><td>$5,800</td><td>387</td><td>143</td><td>3,480</td><td>200 / day</td>';t.appendChild(tr);
-    new Chart(document.getElementById('cDaily'),{type:'bar',data:{labels:PLAN.daily.map(function(x){return x.d;}),
-      datasets:[
-        {label:'Leads',data:PLAN.daily.map(function(x){return x.leads;}),backgroundColor:PLAN.daily.map(function(x){return x.wk?CO.cyan:'rgba(148,163,184,.4)';}),borderRadius:5,yAxisID:'y'},
-        {label:'Calls',type:'line',data:PLAN.daily.map(function(x){return x.calls;}),borderColor:CO.indigo,backgroundColor:CO.indigo,tension:.35,pointRadius:3,yAxisID:'y1'}
-      ]},options:{plugins:{legend:{position:'top'}},scales:{x:noGridX(),y:Object.assign(axis(),{position:'left',title:{display:true,text:'Leads',color:CO.muted}}),y1:{position:'right',grid:{display:false},ticks:{color:CO.muted},title:{display:true,text:'Calls',color:CO.muted}}}}});
-  },
-  leadmix:function(){
-    var opt={plugins:{legend:{position:'bottom'}},cutout:'62%'};
-    new Chart(document.getElementById('cMix'),{type:'doughnut',data:{labels:['Website bio (30%)','Other paid (70%)'],
-      datasets:[{data:[116,271],backgroundColor:[CO.violet,CO.indigo],borderColor:'rgba(11,17,32,.6)',borderWidth:3}]},options:opt});
-    new Chart(document.getElementById('cMixMonth'),{type:'bar',data:{labels:['Week 1','Week 2','Week 3','Week 4'],
-      datasets:[{label:'Website bio',data:[116,116,116,116],backgroundColor:CO.violet,borderRadius:5},
-                {label:'Other paid',data:[271,271,271,271],backgroundColor:CO.indigo,borderRadius:5}]},
-      options:{plugins:{legend:{position:'top'}},scales:{x:Object.assign(noGridX(),{stacked:true}),y:axis(true)}}});
-  },
-  target:function(){
-    new Chart(document.getElementById('cGap'),{type:'bar',data:{labels:['Target','Modeled (3%)'],
-      datasets:[{data:[6,4.29],backgroundColor:[CO.emerald,CO.amber],borderRadius:8,barThickness:70}]},
-      options:{plugins:{legend:{display:false}},scales:{x:noGridX(),y:axis()}}});
-    var rates=[37,42,47,52,57],acqs=rates.map(function(r){return +(387*(r/100)*0.03).toFixed(2);});
-    new Chart(document.getElementById('cSweep'),{type:'line',data:{labels:rates.map(function(r){return r+'%';}),
-      datasets:[{label:'Acquisitions / week',data:acqs,borderColor:CO.cyan,backgroundColor:'rgba(6,182,212,.12)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:CO.cyan},
-                {label:'Target (6)',data:rates.map(function(){return 6;}),borderColor:CO.emerald,borderDash:[6,5],pointRadius:0,fill:false}]},
-      options:{plugins:{legend:{position:'top'}},scales:{x:noGridX(),y:axis()}}});
-  }
+/* ---------- OVERVIEW ---------- */
+overview:function(c){
+  c.innerHTML =
+  '<div class="dashboard-view">'+
+  '<div class="strategic-headline">July Plan — Strategic Overview</div>'+
+  '<div class="strategic-subtitle">3-rep team · $15 cost per lead · $1,200 per acquisition · target 6 acquisitions / week. Model built strictly from your inputs.</div>'+
+
+  '<div class="overview-columns">'+
+    '<div><div class="overview-col-header green"><span class="header-dot"></span>THE WEEKLY MACHINE</div>'+
+      '<div class="overview-box"><div class="overview-box-title">$5,800 spend → 387 leads</div><div class="overview-box-desc">$1,000/day Mon–Fri + $400 Sat + $400 Sun, all at $15 per lead.</div></div>'+
+      '<div class="overview-box"><div class="overview-box-title">387 leads → 143 contacted</div><div class="overview-box-desc">At a 37% contacted rate, 143 leads reach a live conversation each week.</div></div>'+
+      '<div class="overview-box"><div class="overview-box-title">143 contacted → 4.3 acquisitions</div><div class="overview-box-desc">At 3% conversion the inputs deliver 4.3/wk — 1.7 short of the 6 target.</div></div>'+
+    '</div>'+
+    '<div><div class="overview-col-header amber"><span class="header-dot"></span>THE OPERATING RHYTHM</div>'+
+      '<div class="overview-box"><div class="overview-box-title">9 calls per lead, every day</div><div class="overview-box-desc">3,480 calls/week — 600 per weekday split across 3 reps (200 each).</div></div>'+
+      '<div class="overview-box"><div class="overview-box-title">Weekends captured, not lost</div><div class="overview-box-desc">Sat + Sun spend keeps producing leads; they are worked at the start of the following week.</div></div>'+
+      '<div class="overview-box"><div class="overview-box-title">30% direct website bio leads</div><div class="overview-box-desc">116 of 387 weekly leads come straight from the bio link — the rest are paid.</div></div>'+
+    '</div>'+
+  '</div>'+
+
+  '<div class="chart-grid cols-2">'+
+    '<div class="chart-card"><div class="chart-insight-title">The plan clears 6/week only above 143 contacted leads</div><div class="chart-insight-stat">Weekly funnel · leads → contacted (37%) → acquisitions</div><div class="chart-wrap"><canvas id="cFunnel" height="230"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">At target, weekly revenue outruns spend 1.24×</div><div class="chart-insight-stat">$7,200 revenue @ 6 acq vs $5,800 spend · model lands at $5,150</div><div class="chart-wrap"><canvas id="cRevSpend" height="230"></canvas></div></div>'+
+  '</div>'+
+
+  '<div class="overview-impact-banner">'+
+    '<div class="overview-impact-label">Monthly Revenue at Target (4 weeks)</div>'+
+    '<div class="overview-impact-value">$28,800</div>'+
+    '<div class="overview-impact-sub">$23,200 spend · 1,547 leads · 572 contacted · 24 acquisitions @ $1,200 · CAC $967</div>'+
+  '</div>'+
+  '</div>';
+
+  killCharts();
+  charts.push(new Chart(document.getElementById('cFunnel'),{type:'bar',
+    data:{labels:['Leads','Contacted (37%)','Acquisitions'],datasets:[{data:[387,143,6],backgroundColor:[CO.cyan,CO.indigo,CO.emerald],borderRadius:8,barThickness:40}]},
+    options:{indexAxis:'y',layout:{padding:{left:6}},plugins:{legend:{display:false}},scales:{x:axis(),y:Object.assign(noGrid(),{ticks:{color:CO.text,crossAlign:'far',padding:6}})}}}));
+  charts.push(new Chart(document.getElementById('cRevSpend'),{type:'bar',
+    data:{labels:['Spend','Revenue @ target','Revenue @ model'],datasets:[{data:[5800,7200,5150],backgroundColor:[CO.indigo,CO.emerald,CO.amber],borderRadius:8,barThickness:56}]},
+    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,callback:function(v){return '$'+(v/1000)+'k';}}})}}}));
+},
+
+/* ---------- ECONOMICS ---------- */
+economics:function(c){
+  c.innerHTML =
+  '<div class="dashboard-view">'+
+  '<div class="strategic-headline">Weekly Economics — Unit Costs &amp; Return</div>'+
+  '<div class="strategic-subtitle">What every dollar of ad spend produces at $15/lead · 37% contacted · 3% conversion.</div>'+
+
+  '<div class="kpi-row cols-4">'+
+    kpi('SPEND / WEEK','$5,800','$23,200 per month')+
+    kpi('REVENUE @ TARGET','$7,200','6 acquisitions × $1,200','green')+
+    kpi('ROAS @ TARGET','1.24×','revenue ÷ spend','green')+
+    kpi('CAC @ TARGET','$967','$5,800 ÷ 6 acquisitions','amber')+
+  '</div>'+
+
+  '<div class="chart-grid cols-2">'+
+    '<div class="chart-card"><div class="chart-insight-title">$15 a lead compounds to $967 an acquisition</div><div class="chart-insight-stat">Cost climbs at each stage of the funnel (log scale)</div><div class="chart-wrap"><canvas id="cCostChain" height="250"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">Break-even sits between 5 and 6 acquisitions</div><div class="chart-insight-stat">Weekly profit = revenue − $5,800 spend</div><div class="chart-wrap"><canvas id="cProfit" height="250"></canvas></div></div>'+
+  '</div>'+
+
+  '<div class="data-table-card"><div class="chart-card-title">Economics detail — per week &amp; per month</div>'+
+    '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Metric</th><th>Per week</th><th>Per month (×4)</th></tr></thead><tbody>'+
+    '<tr><td>Ad spend</td><td>$5,800</td><td>$23,200</td></tr>'+
+    '<tr><td>Leads (@ $15)</td><td>387</td><td>1,547</td></tr>'+
+    '<tr><td>Contacted (37%)</td><td>143</td><td>572</td></tr>'+
+    '<tr><td>Acquisitions (target)</td><td>6</td><td>24</td></tr>'+
+    '<tr><td>Acquisitions (model, 3%)</td><td>4.3</td><td>17.2</td></tr>'+
+    '<tr><td>Revenue @ target</td><td>$7,200</td><td>$28,800</td></tr>'+
+    '<tr><td>ROAS @ target</td><td>1.24×</td><td>1.24×</td></tr>'+
+    '<tr><td>CAC @ target</td><td>$967</td><td>$967</td></tr>'+
+    '<tr><td>Calls (9 / lead)</td><td>3,480</td><td>13,920</td></tr>'+
+    '</tbody></table></div></div>'+
+
+  '<div class="std-insight">At $15/lead, the funnel converts spend into acquisitions at roughly <b style="color:#fff">$967 each</b> when you hit the 6/week target — comfortably under the $1,200 sale price, leaving a <b style="color:#fff">1.24× ROAS</b>. At the modeled 4.3/week, weekly revenue ($5,150) falls just below spend, so closing the gap to 6 is what turns the week profitable.</div>'+
+  '</div>';
+
+  killCharts();
+  charts.push(new Chart(document.getElementById('cCostChain'),{type:'bar',
+    data:{labels:['Cost / lead','Cost / contacted','Cost / acquisition'],datasets:[{data:[15,41,967],backgroundColor:[CO.cyan,CO.indigo,CO.amber],borderRadius:8,barThickness:56}]},
+    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:Object.assign(axis(),{type:'logarithmic',ticks:{color:CO.muted,callback:function(v){return '$'+v;}}})}}}));
+  var acqx=[3,4,5,6,7,8], profit=acqx.map(function(a){return a*1200-5800;});
+  charts.push(new Chart(document.getElementById('cProfit'),{type:'bar',
+    data:{labels:acqx.map(function(a){return a+' acq';}),datasets:[{data:profit,backgroundColor:profit.map(function(p){return p>=0?CO.emerald:CO.red;}),borderRadius:6}]},
+    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({ticks:{color:CO.muted,callback:function(v){return '$'+(v/1000).toFixed(1)+'k';}}})}}}));
+},
+
+/* ---------- CADENCE ---------- */
+cadence:function(c){
+  c.innerHTML =
+  '<div class="dashboard-view">'+
+  '<div class="strategic-headline">Daily Cadence — Leads &amp; Call Load</div>'+
+  '<div class="strategic-subtitle">9 calls per lead, every day · 3 reps working weekdays only · weekend leads worked at the start of the following week.</div>'+
+
+  '<div class="kpi-row cols-4">'+
+    kpi('LEADS / WEEKDAY','67','$1,000 spend ÷ $15')+
+    kpi('CALLS / WEEKDAY','600','67 leads × 9 calls')+
+    kpi('CALLS / REP / DAY','200','600 calls ÷ 3 reps','amber')+
+    kpi('WEEKEND LEADS','53','Sat + Sun · worked Monday','green')+
+  '</div>'+
+
+  '<div class="chart-card"><div class="chart-insight-title">Weekday call load holds at 600/day; weekend leads bank for Monday</div><div class="chart-insight-stat">Leads (bars) vs calls (line) by day of week — grey bars are weekend leads, not lost</div><div class="chart-wrap"><canvas id="cDaily" height="150"></canvas></div></div>'+
+
+  '<div class="data-table-card"><div class="chart-card-title">Daily plan</div>'+
+    '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Day</th><th>Spend</th><th>Leads</th><th>Contacted (37%)</th><th>Calls (9/lead)</th><th>Calls / Rep</th></tr></thead><tbody>'+
+    PLAN.daily.map(function(x){return '<tr><td>'+x.d+(x.wk?'':' *')+'</td><td>$'+x.spend.toLocaleString()+'</td><td>'+x.leads.toFixed(1)+'</td><td>'+x.contacted.toFixed(1)+'</td><td>'+x.calls+'</td><td>'+(x.perRep?x.perRep:'—')+'</td></tr>';}).join('')+
+    '<tr style="font-weight:700"><td>Week</td><td>$5,800</td><td>387</td><td>143</td><td>3,480</td><td>200 / day</td></tr>'+
+    '</tbody></table></div></div>'+
+
+  '<div class="std-insight">* Saturday and Sunday spend keeps generating leads (≈53/weekend), but the 3 reps do not call on weekends — those leads are worked first thing Monday, so they are <b style="color:#fff">banked, not lost</b>. Note the weekday load: 200 calls per rep per day is aggressive for a 3-person team and is the main operational risk in this plan.</div>'+
+  '</div>';
+
+  killCharts();
+  charts.push(new Chart(document.getElementById('cDaily'),{type:'bar',
+    data:{labels:PLAN.daily.map(function(x){return x.d;}),datasets:[
+      {type:'bar',label:'Leads',data:PLAN.daily.map(function(x){return x.leads;}),backgroundColor:PLAN.daily.map(function(x){return x.wk?CO.cyan:'rgba(148,163,184,.35)';}),borderRadius:6,yAxisID:'y',order:2},
+      {type:'line',label:'Calls',data:PLAN.daily.map(function(x){return x.calls;}),borderColor:CO.indigo,backgroundColor:CO.indigo,tension:.35,pointRadius:4,pointBackgroundColor:CO.indigo,yAxisID:'y1',order:1}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:noGrid(),
+      y:Object.assign(axis(),{position:'left',title:{display:true,text:'Leads',color:CO.muted}}),
+      y1:{position:'right',grid:{display:false},ticks:{color:CO.muted},title:{display:true,text:'Calls',color:CO.muted}}}}}));
+},
+
+/* ---------- LEAD MIX ---------- */
+leadmix:function(c){
+  c.innerHTML =
+  '<div class="dashboard-view">'+
+  '<div class="strategic-headline">Lead Mix — Bio vs Paid</div>'+
+  '<div class="strategic-subtitle">30% of the weekly lead mix comes directly from the website bio link.</div>'+
+
+  '<div class="kpi-row cols-3">'+
+    kpi('TOTAL LEADS / WEEK','387','all at $15 / lead')+
+    kpi('WEBSITE BIO LEADS','116','30% of the mix','green')+
+    kpi('OTHER PAID LEADS','271','70% of the mix')+
+  '</div>'+
+
+  '<div class="chart-grid cols-2">'+
+    '<div class="chart-card"><div class="chart-insight-title">Nearly a third of demand arrives free from the bio</div><div class="chart-insight-stat">Weekly split · website bio vs other paid</div><div class="chart-wrap"><canvas id="cMix" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">Mix stays constant as spend scales across the month</div><div class="chart-insight-stat">Leads per week · stacked bio + paid</div><div class="chart-wrap"><canvas id="cMixMonth" height="240"></canvas></div></div>'+
+  '</div>'+
+
+  '<div class="std-insight">The <b style="color:#fff">116 weekly bio leads</b> (464/month) are the highest-intent, lowest-friction segment in the plan — they chose to click through from the profile. Protecting and growing the bio share is the cheapest lever to improve blended CAC without raising ad spend.</div>'+
+  '</div>';
+
+  killCharts();
+  charts.push(new Chart(document.getElementById('cMix'),{type:'doughnut',
+    data:{labels:['Website bio (30%)','Other paid (70%)'],datasets:[{data:[116,271],backgroundColor:[CO.emerald,CO.indigo],borderColor:'rgba(11,17,32,.6)',borderWidth:3}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:CO.sec,usePointStyle:true,padding:16}}}}}));
+  charts.push(new Chart(document.getElementById('cMixMonth'),{type:'bar',
+    data:{labels:['Week 1','Week 2','Week 3','Week 4'],datasets:[
+      {label:'Website bio',data:[116,116,116,116],backgroundColor:CO.emerald,borderRadius:{topLeft:0,topRight:0,bottomLeft:6,bottomRight:6}},
+      {label:'Other paid',data:[271,271,271,271],backgroundColor:CO.indigo,borderRadius:6}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:Object.assign(noGrid(),{stacked:true}),y:Object.assign(axis(),{stacked:true})}}}));
+},
+
+/* ---------- TARGET & GAP ---------- */
+target:function(c){
+  c.innerHTML =
+  '<div class="dashboard-view">'+
+  '<div class="strategic-headline">Target &amp; Gap — Hitting 6 / Week</div>'+
+  '<div class="strategic-subtitle">What the plan inputs deliver versus the 6 acquisitions / week target — and exactly what closes the gap.</div>'+
+
+  '<div class="kpi-row cols-4">'+
+    kpi('TARGET','6.0','acquisitions / week','green')+
+    kpi('MODELED','4.3','143 contacted × 3%','amber')+
+    kpi('CONVERSION TO HIT 6','4.2%','if contacted stays 37%')+
+    kpi('CONTACTED TO HIT 6','51.7%','if conversion stays 3%')+
+  '</div>'+
+
+  '<div class="verdict-banner" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.18);border-left-color:#F59E0B">'+
+    '<div class="verdict-label" style="color:#F59E0B">Gap to Target</div>'+
+    '<div class="verdict-text">At $15/lead, 37% contacted and 3% conversion, the plan yields <b style="color:#fff">4.3 acquisitions/week</b> — 1.7 short of the <b style="color:#fff">6/week target</b>. Closing the gap needs <b style="color:#fff">~200 contacted leads/week</b> (vs 143 modeled): either lift <b style="color:#fff">conversion to 4.2%</b> at today\'s contact rate, or lift <b style="color:#fff">contacted rate to ~52%</b> at 3% conversion. Both levers act on the same driver — more contacted volume per week.</div>'+
+  '</div>'+
+
+  '<div class="chart-grid cols-2" style="margin-top:22px">'+
+    '<div class="chart-card"><div class="chart-insight-title">The inputs land 1.7 acquisitions below target</div><div class="chart-insight-stat">Acquisitions / week · target vs modeled</div><div class="chart-wrap"><canvas id="cGap" height="240"></canvas></div></div>'+
+    '<div class="chart-card"><div class="chart-insight-title">A 52% contact rate crosses the 6/week line</div><div class="chart-insight-stat">Acquisitions/week by contacted rate · dashed = target (at 3% conversion)</div><div class="chart-wrap"><canvas id="cSweep" height="240"></canvas></div></div>'+
+  '</div>'+
+  '</div>';
+
+  killCharts();
+  charts.push(new Chart(document.getElementById('cGap'),{type:'bar',
+    data:{labels:['Target','Modeled (3%)'],datasets:[{data:[6,4.3],backgroundColor:[CO.emerald,CO.amber],borderRadius:8,barThickness:80}]},
+    options:{plugins:{legend:{display:false}},scales:{x:noGrid(),y:axis({min:0,max:6.5})}}}));
+  var rates=[0.37,0.42,0.47,0.517,0.57], acqs=rates.map(function(r){return +(387*r*0.03).toFixed(2);});
+  charts.push(new Chart(document.getElementById('cSweep'),{type:'line',
+    data:{labels:rates.map(function(r){return Math.round(r*100)+'%';}),datasets:[
+      {label:'Acquisitions / week',data:acqs,borderColor:CO.cyan,backgroundColor:'rgba(6,182,212,.12)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:CO.cyan},
+      {label:'Target (6)',data:rates.map(function(){return 6;}),borderColor:CO.emerald,borderDash:[6,5],pointRadius:0,fill:false}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{color:CO.sec,usePointStyle:true}}},scales:{x:noGrid(),y:axis({min:4,max:7})}}}));
+}
 };
-drawView('overview');
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+var container = document.getElementById('dashboardContainer');
+function render(view){
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view===view); });
+  (VIEWS[view]||VIEWS.overview)(container);
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav-item').forEach(function(b){
+  b.addEventListener('click',function(){ render(b.dataset.view); if(window.innerWidth<=768){ closeSidebar(); } });
+});
+/* mobile */
+var sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
+function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
+function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+document.getElementById('menuToggle').addEventListener('click',openSidebar);
+overlay.addEventListener('click',closeSidebar);
+
+render('overview');
 </script>
-</body></html>
+</body>
+</html>
